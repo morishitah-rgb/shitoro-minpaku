@@ -1283,6 +1283,17 @@ let API_KEY = '';
 let BIN_ID = '';
 
 function loadLocal() {
+  // URLハッシュに初回設定パラメータがあれば自動セット（例: #k=APIKEY&b=BINID）
+  const hash = window.location.hash.slice(1);
+  if (hash.includes('k=') && hash.includes('b=')) {
+    const params = new URLSearchParams(hash);
+    const k = params.get('k'), b = params.get('b');
+    if (k && b) {
+      localStorage.setItem(STORAGE_KEY + '_settings', JSON.stringify({ apikey: k, binid: b }));
+      history.replaceState(null, '', window.location.pathname); // URLからパラメータを除去
+    }
+  }
+
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try { data = JSON.parse(saved); } catch(e){}
