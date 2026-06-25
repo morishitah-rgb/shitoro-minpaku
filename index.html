@@ -231,6 +231,28 @@
   .task-note-area { margin-top:4px; padding:3px 6px; border-radius:4px; cursor:pointer; min-height:20px; font-size:12px; border-bottom:1.5px dashed transparent; transition:border-color 0.15s,background 0.15s; }
   .task-note-area:hover { border-bottom-color: var(--gold); background:#fefdf5; }
   .note-placeholder { color:#b0b8c8; font-style:italic; font-size:11px; }
+  .member-dropdown-popup {
+    position: absolute; z-index: 9999;
+    background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    padding: 6px; min-width: 200px; max-height: 320px; overflow-y: auto;
+  }
+  .member-dropdown-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px; border-radius: 8px; cursor: pointer;
+    transition: background 0.12s;
+  }
+  .member-dropdown-item:hover { background: #f1f5f9; }
+  .member-dropdown-item.selected { background: #eff6ff; }
+  .member-dropdown-avatar {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 12px; font-weight: 700;
+  }
+  .member-dropdown-label { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+  .member-dropdown-name { font-size: 13px; font-weight: 600; color: var(--navy); }
+  .member-dropdown-role { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .member-dropdown-check { color: var(--gold); font-weight: 700; font-size: 14px; }
   .supplies-agg-row { background:#f0f6ff; cursor:pointer; }
   .supplies-agg-row:hover { background:#e6f0ff; }
   .supplies-agg-row td { font-size:13px; border-top:2px solid var(--navy); }
@@ -1561,48 +1583,74 @@ function cycleStatus(taskId) {
   saveLocal(); syncToCloud(); renderAll();
 }
 
+function showMemberDropdown(anchorEl, currentVal, onSelect, onClose) {
+  // 既存ドロップダウンを閉じる
+  document.querySelectorAll('.member-dropdown-popup').forEach(d => d.remove());
+
+  const popup = document.createElement('div');
+  popup.className = 'member-dropdown-popup';
+
+  const choices = [{ name:'（なし）', empty:true }, ...MEMBERS.map(m => ({ name: m.name, role: m.role, ext: m.ext }))];
+  choices.forEach(m => {
+    const color = m.empty ? '#94a3b8' : personColor(m.name);
+    const initial = m.empty ? '−' : personInitial(m.name);
+    const isCurrent = m.empty ? !currentVal : m.name === currentVal;
+    const row = document.createElement('div');
+    row.className = 'member-dropdown-item' + (isCurrent ? ' selected' : '');
+    row.innerHTML = `
+      <span class="member-dropdown-avatar" style="background:${color};">${initial}</span>
+      <span class="member-dropdown-label">
+        <span class="member-dropdown-name">${m.name}</span>
+        ${!m.empty ? `<span class="member-dropdown-role">${m.role}</span>` : ''}
+      </span>
+      ${isCurrent ? '<span class="member-dropdown-check">✓</span>' : ''}
+    `;
+    row.addEventListener('mousedown', e => {
+      e.preventDefault();
+      onSelect(m.empty ? '' : m.name);
+    });
+    popup.appendChild(row);
+  });
+
+  // 位置決め
+  document.body.appendChild(popup);
+  const rect = anchorEl.getBoundingClientRect();
+  const popupH = popup.offsetHeight || 300;
+  const spaceBelow = window.innerHeight - rect.bottom;
+  popup.style.top = (spaceBelow > popupH || spaceBelow > rect.top)
+    ? (rect.bottom + window.scrollY + 4) + 'px'
+    : (rect.top + window.scrollY - popupH - 4) + 'px';
+  popup.style.left = Math.min(rect.left, window.innerWidth - 220) + 'px';
+
+  // 外クリックで閉じる
+  setTimeout(() => {
+    const close = e => {
+      if (!popup.contains(e.target)) { popup.remove(); onClose(); document.removeEventListener('mousedown', close); }
+    };
+    document.addEventListener('mousedown', close);
+  }, 0);
+}
+
 function inlineEditAssignee(el, taskId, field) {
   const task = data.tasks.find(t => t.id === taskId);
   if (!task) return;
-  const old = task[field] || '';
-  const sel = document.createElement('select');
-  sel.className = 'inline-input';
-  const opts = field === 'sub'
-    ? ['（なし）', ...MEMBERS.map(m => m.name)]
-    : ['未定', ...MEMBERS.map(m => m.name)];
-  opts.forEach(c => {
-    const o = document.createElement('option');
-    o.value = (c === '（なし）') ? '' : c;
-    o.textContent = c;
-    if ((old || (field==='sub'?'':' ')) === o.value) o.selected = true;
-    sel.appendChild(o);
-  });
-  el.replaceWith(sel); sel.focus();
-  const save = () => {
-    task[field] = sel.value;
-    saveLocal(); syncToCloud(); renderTasks(currentTaskFilter);
-  };
-  sel.addEventListener('change', save);
-  sel.addEventListener('blur', () => renderTasks(currentTaskFilter));
+  showMemberDropdown(
+    el,
+    task[field] || '',
+    val => { task[field] = val; saveLocal(); syncToCloud(); renderTasks(currentTaskFilter); },
+    () => renderTasks(currentTaskFilter)
+  );
 }
 
 function inlineEditMemberSelect(el, collection, id, field, redraw) {
   const item = collection.find(x => x.id === id);
   if (!item) return;
-  const old = item[field] || '';
-  const sel = document.createElement('select');
-  sel.className = 'inline-input';
-  ['（なし）', ...MEMBERS.map(m => m.name)].forEach(c => {
-    const o = document.createElement('option');
-    o.value = c === '（なし）' ? '' : c;
-    o.textContent = c;
-    if (old === o.value) o.selected = true;
-    sel.appendChild(o);
-  });
-  el.replaceWith(sel); sel.focus();
-  const save = () => { item[field] = sel.value; saveLocal(); syncToCloud(); redraw(); };
-  sel.addEventListener('change', save);
-  sel.addEventListener('blur', redraw);
+  showMemberDropdown(
+    el,
+    item[field] || '',
+    val => { item[field] = val; saveLocal(); syncToCloud(); redraw(); },
+    redraw
+  );
 }
 
 function inlineEditTaskCat(el, taskId) {
