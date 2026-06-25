@@ -334,9 +334,12 @@
 
   /* ===== SUPPLIES ===== */
   .supplies-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .supplies-table th { background: var(--navy); color: white; padding: 10px 12px; text-align: left; font-size: 12px; }
-  .supplies-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  .supplies-table tr:hover td { background: #f8fafc; }
+  .supplies-table th { background: var(--navy); color: white; padding: 10px 12px; text-align: left; font-size: 12px; letter-spacing: 0.03em; }
+  .supplies-table th:first-child { border-radius: 0; }
+  .supplies-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .supplies-table tbody tr { transition: background 0.12s; }
+  .supplies-table tbody tr:hover td { background: #f0f6ff; }
+  .supplies-table tbody tr:hover td:first-child { border-left: 3px solid var(--gold); }
   .supplies-table tr:last-child td { border-bottom: none; }
 
   /* ===== BUDGET ===== */
@@ -347,15 +350,83 @@
   .budget-stat {
     background: white; border-radius: var(--radius-sm); padding: 16px;
     border: 1.5px solid var(--border); text-align: center;
+    transition: box-shadow 0.2s;
   }
-  .budget-stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+  .budget-stat:hover { box-shadow: var(--shadow); }
+  .budget-stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
   .budget-stat-value { font-size: 22px; font-weight: 700; color: var(--navy); }
   .budget-stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
   .budget-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .budget-table th { background: var(--navy); color: white; padding: 10px 12px; text-align: left; font-size: 12px; }
-  .budget-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
-  .budget-table tr:hover td { background: #f8fafc; }
+  .budget-table th { background: var(--navy); color: white; padding: 10px 12px; text-align: left; font-size: 12px; letter-spacing: 0.03em; }
+  .budget-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  .budget-table tbody tr { transition: background 0.12s; }
+  .budget-table tbody tr:hover td { background: #f0f6ff; }
+  .budget-table tbody tr:hover td:first-child { border-left: 3px solid var(--gold); }
   .amount { text-align: right; font-weight: 600; font-family: monospace; }
+
+  /* ===== PERSON CHIP (テーブル内担当表示) ===== */
+  .person-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    border-radius: 20px; padding: 3px 10px 3px 4px;
+    font-size: 12px; font-weight: 600; color: white;
+    cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+  }
+  .person-chip:hover { opacity: 0.85; }
+  .person-chip-avatar {
+    width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 800; color: white;
+    background: rgba(255,255,255,0.3);
+  }
+  .person-chip-empty { color: var(--text-muted); font-size: 13px; cursor: pointer; border-bottom: 1.5px dashed var(--gold-light); }
+  .person-chip-empty:hover { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* ===== CATEGORY BADGE ===== */
+  .cat-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+
+  /* ===== EXPORT BUTTONS ===== */
+  .export-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+  .export-bar-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-right: 4px; }
+  .btn-export {
+    padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700;
+    cursor: pointer; border: 1.5px solid; transition: all 0.15s;
+  }
+  .btn-export-csv { background: #f0fdf4; color: #059669; border-color: #6ee7b7; }
+  .btn-export-csv:hover { background: #059669; color: white; }
+  .btn-export-print { background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; }
+  .btn-export-print:hover { background: #1d4ed8; color: white; }
+
+  /* ===== DOC UPLOAD ===== */
+  .doc-upload-card {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border: 2px dashed var(--gold-light); border-radius: var(--radius-sm);
+    padding: 16px 12px; cursor: pointer; transition: all 0.2s;
+    background: #fffdf5; min-height: 100px; text-align: center;
+  }
+  .doc-upload-card:hover { border-color: var(--gold); background: #fef9ec; }
+  .doc-upload-card .doc-upload-icon { font-size: 24px; margin-bottom: 6px; }
+  .doc-upload-card .doc-upload-label { font-size: 12px; font-weight: 700; color: var(--gold); }
+  .doc-upload-card .doc-upload-sub { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+  #doc-upload-form { display: none; background: white; border: 1.5px solid var(--gold-light); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+  #doc-upload-form.open { display: block; }
+  .doc-user-card { position: relative; }
+  .doc-delete-btn { position: absolute; top: 6px; right: 6px; background: #fef2f2; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 10px; color: #dc2626; display: flex; align-items: center; justify-content: center; }
+  .doc-delete-btn:hover { background: #dc2626; color: white; }
+
+  /* ===== PRINT ===== */
+  @media print {
+    header, .nav-tabs, .tab-content:not(#tab-budget), .btn, #budget-lock-banner,
+    .budget-table td:last-child, .budget-table th:last-child,
+    .export-bar, .budget-table .attach-btn { display: none !important; }
+    #tab-budget { display: block !important; }
+    body { background: white; }
+    .budget-stat { border: 1px solid #ddd; }
+    .budget-table th { background: #1a2744 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .amount-locked { display: none; }
+  }
 
   /* ===== MEMBERS ===== */
   .members-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
@@ -759,7 +830,12 @@
   <div class="section-title">💴 予算管理</div>
   <div id="budget-lock-banner"></div>
   <div class="budget-summary" id="budget-summary"></div>
-  <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+    <div class="export-bar">
+      <span class="export-bar-label">📤 エクスポート：</span>
+      <button class="btn-export btn-export-csv" onclick="exportBudgetCSV()">📊 CSV（スプレッドシート）</button>
+      <button class="btn-export btn-export-print" onclick="printBudget()">🖨️ PDF印刷</button>
+    </div>
     <button class="btn btn-gold" onclick="openModal('budget-modal')">＋ 費目追加</button>
   </div>
   <div class="card">
@@ -825,6 +901,45 @@
 <!-- ⑦ 図面・資料 -->
 <div class="tab-content" id="tab-documents">
   <div class="section-title">📋 図面・資料</div>
+
+  <!-- ユーザーアップロード資料 -->
+  <div id="user-docs-section"></div>
+
+  <!-- アップロードフォーム -->
+  <div id="doc-upload-form">
+    <div style="font-weight:700;font-size:14px;color:var(--navy);margin-bottom:12px;">📎 資料を追加</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">資料名 *</label>
+        <input type="text" class="form-input" id="doc-name-input" placeholder="例：消防検査チェックリスト">
+      </div>
+      <div class="form-group">
+        <label class="form-label">カテゴリ</label>
+        <select class="form-select" id="doc-cat-input">
+          <option>消防設備</option><option>設計図書</option><option>行政・認定</option>
+          <option>インテリア</option><option>見積・契約</option><option>写真</option><option>その他</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:2;">
+        <label class="form-label">URL（Google Drive / Dropbox 等）</label>
+        <input type="url" class="form-input" id="doc-url-input" placeholder="https://drive.google.com/...">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">アップロード担当</label>
+        <input type="text" class="form-input" id="doc-by-input" placeholder="例：水野萌">
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:12px;">
+      <button class="btn" onclick="closeDocForm()" style="background:#f1f5f9;color:var(--navy);">キャンセル</button>
+      <button class="btn btn-gold" onclick="saveDoc()">保存</button>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+    <button class="btn btn-gold" onclick="openDocForm()">＋ 資料を追加</button>
+  </div>
   <div class="card" style="margin-bottom:16px;">
     <div class="card-title">🔥 消防設備図面</div>
     <div class="docs-grid">
@@ -1300,7 +1415,8 @@
 let data = {
   tasks: [],
   supplies: [],
-  budget: []
+  budget: [],
+  docs: []
 };
 
 const MEMBERS = [
@@ -1455,6 +1571,7 @@ function renderAll() {
   renderSupplies('all');
   renderBudget();
   renderMembers();
+  renderDocs();
   updateOverallProgress();
 }
 
@@ -1809,8 +1926,75 @@ function personColor(name) {
 }
 function personInitial(name) {
   if (!name) return '?';
-  // 漢字なら1文字、英語なら頭文字
   return name.charAt(0);
+}
+
+// 担当者カラーchip HTML（テーブル内用）
+function personChipHtml(name) {
+  if (!name) return '<span class="person-chip-empty editable-click">— 未設定</span>';
+  const color = personColor(name);
+  const initial = personInitial(name);
+  return `<span class="person-chip" style="background:${color};">
+    <span class="person-chip-avatar">${initial}</span>${name}
+  </span>`;
+}
+
+// カテゴリバッジスタイル
+const CAT_STYLES = {
+  '消防設備': 'background:#fef2f2;color:#dc2626;border:1px solid #fecaca;',
+  '消防':     'background:#fef2f2;color:#dc2626;border:1px solid #fecaca;',
+  'エアコン': 'background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;',
+  '電子錠':   'background:#f0fdf4;color:#15803d;border:1px solid #86efac;',
+  '家具':     'background:#fdf4ff;color:#7e22ce;border:1px solid #e9d5ff;',
+  '家電':     'background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;',
+  '寝具':     'background:#f0fdfa;color:#0f766e;border:1px solid #99f6e4;',
+  '登記費用': 'background:#fefce8;color:#a16207;border:1px solid #fde68a;',
+  '登記':     'background:#fefce8;color:#a16207;border:1px solid #fde68a;',
+  '行政書士': 'background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;',
+  '補修':     'background:#f8fafc;color:#475569;border:1px solid #cbd5e1;',
+  'アメニティ':'background:#fdf2f8;color:#9d174d;border:1px solid #fbcfe8;',
+  '撮影':     'background:#fefce8;color:#b45309;border:1px solid #fcd34d;',
+  '看板塗り替え':'background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;',
+  '看板':     'background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;',
+  '設備':     'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;',
+  'その他':   'background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;',
+};
+function catBadgeStyle(cat) {
+  return CAT_STYLES[cat] || 'background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;';
+}
+
+// ===== EXPORT =====
+function exportBudgetCSV() {
+  const items = data.budget || [];
+  const supplies = data.supplies || [];
+  const BOM = '﻿';
+  const rows = [['費目', 'カテゴリ', '担当', '予算（税込）', '稟議', '実績（税込）', '差異', 'メモ']];
+  items.forEach(b => {
+    const est = Number(b.est)||0, act = Number(b.actual)||0;
+    rows.push([b.name, b.cat, b.person||'', est||'', b.ringi||'', act||'', est-act, b.memo||'']);
+  });
+  // 備品一式行
+  const supplyEst = supplies.reduce((s,x)=>s+(Number(x.price)||0),0);
+  const supplyAct = supplies.reduce((s,x)=>s+(Number(x.actual_price)||0),0);
+  rows.push(['備品費（一式）', '家具・家電・アメニティ等', '', supplyEst, '', supplyAct, supplyEst-supplyAct, '備品タブより自動集計']);
+  rows.push([]);
+  rows.push(['【備品明細】']);
+  rows.push(['品名', 'カテゴリ', '数量', '担当', 'ステータス', '納期', '予算（税込）', '実績（税込）', '差異']);
+  supplies.forEach(s => {
+    const p = Number(s.price)||0, a = Number(s.actual_price)||0;
+    rows.push([s.name, s.cat, s.qty||'', s.person||'', s.status||'', s.due||'', p||'', a||'', p-a]);
+  });
+  const csv = BOM + rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = '志都呂民泊_予算管理_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function printBudget() {
+  if (!budgetUnlocked) { alert('PINで解除してから印刷してください。'); return; }
+  window.print();
 }
 
 let currentAssigneeFilter = '';
@@ -1901,9 +2085,9 @@ function renderSupplies(filter) {
     const hasAttach = !!localStorage.getItem(STORAGE_KEY + '_' + attachKey);
     return `<tr>
     <td style="font-weight:600;"><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','name','text')">${s.name}</span></td>
-    <td><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','cat','select-cat')">${s.cat}</span></td>
+    <td><span class="editable-click cat-badge" style="${catBadgeStyle(s.cat)}" onclick="inlineEditSupply(this,'${s.id}','cat','select-cat')">${s.cat}</span></td>
     <td><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','qty','text')">${s.qty || '—'}</span></td>
-    <td><span class="editable-click" onclick="inlineEditMemberSelect(this,data.supplies,'${s.id}','person',()=>renderSupplies(currentSupplyFilter||'all'))">${s.person || '—'}</span></td>
+    <td onclick="inlineEditMemberSelect(this,data.supplies,'${s.id}','person',()=>renderSupplies(currentSupplyFilter||'all'))">${personChipHtml(s.person)}</td>
     <td><span class="editable-click" style="background:${statusColor[s.status]||'#f1f5f9'};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;" onclick="inlineEditSupply(this,'${s.id}','status','select-status')">${s.status}</span></td>
     <td><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','due','date')">${s.due || '—'}</span></td>
     <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','price','number')">${s.price ? '¥'+Number(s.price).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
@@ -1987,8 +2171,8 @@ function renderBudget() {
     const hasAttach = !!localStorage.getItem(STORAGE_KEY + '_' + attachKey);
     return `<tr>
     <td style="font-weight:600;"><span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','name','text')">${b.name}</span></td>
-    <td><span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','cat','select-cat')">${b.cat}</span></td>
-    <td><span class="editable-click" onclick="inlineEditMemberSelect(this,data.budget,'${b.id}','person',()=>renderBudget())">${b.person || '—'}</span></td>
+    <td><span class="editable-click cat-badge" style="${catBadgeStyle(b.cat)}" onclick="inlineEditBudget(this,'${b.id}','cat','select-cat')">${b.cat}</span></td>
+    <td onclick="inlineEditMemberSelect(this,data.budget,'${b.id}','person',()=>renderBudget())">${personChipHtml(b.person)}</td>
     <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','est','number')">${b.est ? '¥'+Number(b.est).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
     <td><span class="editable-click" style="background:${ringiColor[b.ringi]||'#f1f5f9'};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;" onclick="inlineEditBudget(this,'${b.id}','ringi','select-ringi')">${b.ringi}</span></td>
     <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','actual','number')">${b.actual ? '¥'+Number(b.actual).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
@@ -2008,10 +2192,11 @@ function toggleSuppliesRow() {
 
 function renderMembers() {
   document.getElementById('members-grid').innerHTML = MEMBERS.map(m => {
-    const initials = m.name.substring(0,2);
+    const color = personColor(m.name);
+    const initial = personInitial(m.name);
     return `<div class="member-card${m.commander?' commander':''}">
       ${m.commander ? '<div class="commander-badge">👑 総司令官</div>' : ''}
-      <div class="member-avatar">${initials}</div>
+      <div class="member-avatar" style="background:${color};">${initial}</div>
       <div class="member-name">${m.name}</div>
       <div class="member-role">${m.role}</div>
       <div class="member-org${m.ext?' external':''}">${m.org}</div>
@@ -2147,6 +2332,82 @@ function deleteBudget(id) {
   if (!confirm('削除しますか？')) return;
   data.budget = data.budget.filter(x => x.id !== id);
   saveLocal(); syncToCloud(); renderBudget();
+}
+
+// ===== DOCS =====
+const DOC_CAT_ICONS = {
+  '消防設備':'🔥','設計図書':'📐','行政・認定':'🏛️','インテリア':'🛋️',
+  '見積・契約':'📑','写真':'📷','その他':'📄'
+};
+const DOC_CAT_COLORS = {
+  '消防設備':'#fef2f2;color:#dc2626;border:1px solid #fecaca',
+  '設計図書':'#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe',
+  '行政・認定':'#f0fdf4;color:#15803d;border:1px solid #86efac',
+  'インテリア':'#fdf4ff;color:#7e22ce;border:1px solid #e9d5ff',
+  '見積・契約':'#fefce8;color:#a16207;border:1px solid #fde68a',
+  '写真':'#fff7ed;color:#c2410c;border:1px solid #fed7aa',
+  'その他':'#f8fafc;color:#64748b;border:1px solid #e2e8f0',
+};
+
+function renderDocs() {
+  const sec = document.getElementById('user-docs-section');
+  if (!sec) return;
+  const docs = data.docs || [];
+  if (!docs.length) { sec.innerHTML = ''; return; }
+  // カテゴリ別にグループ化
+  const groups = {};
+  docs.forEach(d => { if (!groups[d.cat]) groups[d.cat] = []; groups[d.cat].push(d); });
+  sec.innerHTML = Object.entries(groups).map(([cat, items]) => `
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">
+        ${DOC_CAT_ICONS[cat]||'📄'} ${cat}
+        <span class="cat-badge" style="background:${DOC_CAT_COLORS[cat]||'#f8fafc'};margin-left:8px;font-size:10px;">追加済</span>
+      </div>
+      <div class="docs-grid">
+        ${items.map(d => `
+          <div class="doc-card doc-user-card" style="position:relative;">
+            <button class="doc-delete-btn" onclick="deleteDoc('${d.id}')" title="削除">✕</button>
+            ${d.url
+              ? `<a href="${d.url}" target="_blank" style="text-decoration:none;display:contents;">
+                  <div class="doc-icon">${DOC_CAT_ICONS[d.cat]||'📄'}</div>
+                  <div class="doc-name">${d.name}</div>
+                  <div class="doc-tag" style="background:#f0fdf4;color:#15803d;border-color:#86efac;">🔗 開く</div>
+                </a>`
+              : `<div class="doc-icon">${DOC_CAT_ICONS[d.cat]||'📄'}</div>
+                 <div class="doc-name">${d.name}</div>
+                 <div class="doc-tag">URL未設定</div>`}
+            ${d.by ? `<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">by ${d.by}</div>` : ''}
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function openDocForm() {
+  document.getElementById('doc-upload-form').classList.add('open');
+  document.getElementById('doc-name-input').focus();
+}
+function closeDocForm() {
+  document.getElementById('doc-upload-form').classList.remove('open');
+  ['doc-name-input','doc-url-input','doc-by-input'].forEach(id => document.getElementById(id).value = '');
+}
+function saveDoc() {
+  const name = document.getElementById('doc-name-input').value.trim();
+  if (!name) { alert('資料名を入力してください'); return; }
+  const doc = {
+    id: 'd' + Date.now(),
+    name,
+    cat: document.getElementById('doc-cat-input').value,
+    url: document.getElementById('doc-url-input').value.trim(),
+    by: document.getElementById('doc-by-input').value.trim(),
+  };
+  if (!data.docs) data.docs = [];
+  data.docs.push(doc);
+  saveLocal(); syncToCloud(); renderDocs(); closeDocForm();
+}
+function deleteDoc(id) {
+  if (!confirm('この資料を削除しますか？')) return;
+  data.docs = (data.docs || []).filter(d => d.id !== id);
+  saveLocal(); syncToCloud(); renderDocs();
 }
 
 // ===== ATTACH / OCR =====
