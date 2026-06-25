@@ -122,43 +122,104 @@
   .badge-lock { background: #fee2e2; color: #991b1b; }
 
   /* ===== PHASE TIMELINE ===== */
-  .timeline { position: relative; padding: 10px 0; }
-  .timeline-header {
-    display: grid; grid-template-columns: 200px 1fr 120px;
-    gap: 12px; padding: 8px 16px;
-    background: var(--navy); color: white;
-    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-    font-size: 12px; font-weight: 600;
+  /* ===== MILESTONE VERTICAL TIMELINE ===== */
+  .milestone-timeline { position: relative; padding: 4px 0 4px 52px; }
+  .milestone-timeline::before {
+    content: ''; position: absolute; left: 20px; top: 12px; bottom: 12px;
+    width: 2px; background: linear-gradient(to bottom, var(--gold) 0%, var(--navy) 100%);
   }
-  .phase-row {
-    display: grid; grid-template-columns: 200px 1fr 120px;
-    gap: 12px; padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    align-items: center;
-    transition: background 0.2s;
+  .milestone-item {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 10px 0; position: relative;
   }
-  .phase-row:hover { background: #f8fafc; }
-  .phase-row:last-child { border-bottom: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); }
-  .phase-name { font-weight: 700; font-size: 13px; color: var(--navy); }
-  .phase-period { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-  .phase-bar-wrap { position: relative; height: 20px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
-  .phase-bar { height: 100%; border-radius: 10px; transition: width 0.6s ease; position: relative; }
-  .phase-bar::after {
-    content: attr(data-pct) '%';
-    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-    font-size: 10px; font-weight: 700; color: white;
+  .milestone-dot {
+    position: absolute; left: -39px; top: 13px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: white; border: 2.5px solid var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.15); z-index: 1;
   }
-  .phase-items { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
-  .phase-status { text-align: center; }
-  .milestone {
-    display: flex; align-items: center; gap: 8px;
-    padding: 10px 16px; background: linear-gradient(135deg, var(--gold-pale), #fff);
-    border-left: 4px solid var(--gold); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    margin: 8px 0; font-size: 13px;
+  .milestone-dot.done { background: var(--gold); }
+  .milestone-dot.final {
+    background: var(--navy); border-color: var(--navy);
+    width: 20px; height: 20px; left: -41px; top: 11px;
+    box-shadow: 0 0 0 4px rgba(26,39,68,0.15);
   }
-  .milestone-icon { font-size: 18px; }
-  .milestone-date { font-weight: 700; color: var(--gold); min-width: 60px; }
-  .milestone-text { font-weight: 600; color: var(--navy); }
+  .milestone-date-tag {
+    font-size: 11px; font-weight: 800; color: var(--gold);
+    background: #fef9ec; border: 1.5px solid var(--gold-light);
+    border-radius: 6px; padding: 3px 10px;
+    white-space: nowrap; min-width: 58px; text-align: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .milestone-item.final .milestone-date-tag {
+    background: var(--navy); color: #c9a84c; border-color: var(--navy);
+  }
+  .milestone-content {}
+  .milestone-title {
+    font-size: 13px; font-weight: 700; color: var(--navy); line-height: 1.4;
+  }
+  .milestone-item.final .milestone-title {
+    font-size: 15px; font-weight: 800; color: var(--navy);
+  }
+  .milestone-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+  /* ===== GANTT CHART ===== */
+  .gantt-wrap { overflow-x: auto; }
+  .gantt { min-width: 560px; }
+  .gantt-header {
+    display: grid; grid-template-columns: 170px 1fr;
+    border-bottom: 2px solid var(--navy); margin-bottom: 0;
+  }
+  .gantt-header-label {
+    font-size: 11px; font-weight: 700; color: var(--navy);
+    padding: 6px 12px 6px 0; background: white;
+  }
+  .gantt-months-row {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    border-left: 1px solid var(--border);
+  }
+  .gantt-month {
+    text-align: center; font-size: 11px; font-weight: 700;
+    color: var(--navy); padding: 6px 0;
+    border-left: 1px dashed rgba(26,39,68,0.15);
+  }
+  .gantt-month:first-child { border-left: none; }
+  .gantt-rows { position: relative; }
+  .gantt-row {
+    display: grid; grid-template-columns: 170px 1fr;
+    align-items: center; border-bottom: 1px solid var(--border);
+    padding: 6px 0;
+  }
+  .gantt-row:last-child { border-bottom: none; }
+  .gantt-label { padding-right: 12px; }
+  .gantt-phase-name { font-size: 12px; font-weight: 700; color: var(--navy); }
+  .gantt-phase-period { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+  .gantt-bar-area {
+    position: relative; height: 32px;
+    border-left: 1px solid rgba(26,39,68,0.08);
+  }
+  .gantt-grid-line {
+    position: absolute; top: 0; bottom: 0; width: 1px;
+    background: rgba(26,39,68,0.08);
+  }
+  .gantt-bar {
+    position: absolute; height: 22px; top: 5px;
+    border-radius: 5px; display: flex; align-items: center;
+    padding: 0 8px; font-size: 10px; font-weight: 700; color: white;
+    white-space: nowrap; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  }
+  .gantt-pct-badge {
+    margin-left: auto; background: rgba(255,255,255,0.25);
+    border-radius: 3px; padding: 0 4px; font-size: 9px; flex-shrink: 0;
+  }
+  .gantt-today-line {
+    position: absolute; top: 0; bottom: 0; width: 2px;
+    background: #ef4444; opacity: 0.7; z-index: 2;
+  }
+  .gantt-today-line::before {
+    content: '今日'; position: absolute; top: -18px; left: -10px;
+    font-size: 9px; font-weight: 700; color: #ef4444; white-space: nowrap;
+  }
 
   /* ===== TASKS ===== */
   .task-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
@@ -414,28 +475,114 @@
   <!-- マイルストーン -->
   <div class="card" style="margin-bottom:20px;">
     <div class="card-title">🚩 マイルストーン</div>
-    <div class="milestone"><span class="milestone-icon">📄</span><span class="milestone-date">6/26</span><span class="milestone-text">消防設備見積受領</span></div>
-    <div class="milestone"><span class="milestone-icon">📝</span><span class="milestone-date">6末</span><span class="milestone-text">表題登記・保存登記完了</span></div>
-    <div class="milestone"><span class="milestone-icon">🔨</span><span class="milestone-date">7月中</span><span class="milestone-text">消防設備・エアコン・電子錠工事着工</span></div>
-    <div class="milestone"><span class="milestone-icon">🚒</span><span class="milestone-date">7末</span><span class="milestone-text">消防検査立合・工事完了・マットレス搬入</span></div>
-    <div class="milestone"><span class="milestone-icon">📜</span><span class="milestone-date">8初旬</span><span class="milestone-text">消防法令適合通知書　交付</span></div>
-    <div class="milestone"><span class="milestone-icon">🏛️</span><span class="milestone-date">8中旬</span><span class="milestone-text">民泊開業届　提出（板尾先生）</span></div>
-    <div class="milestone"><span class="milestone-icon">📸</span><span class="milestone-date">8末</span><span class="milestone-text">写真撮影・清掃ブリーフィング</span></div>
-    <div class="milestone"><span class="milestone-icon">✅</span><span class="milestone-date">9/15</span><span class="milestone-text">開業届　受理</span></div>
-    <div class="milestone"><span class="milestone-icon">🛏️</span><span class="milestone-date">9/16</span><span class="milestone-text">試泊（社内）</span></div>
-    <div class="milestone"><span class="milestone-icon">🎉</span><span class="milestone-date">10/1</span><span class="milestone-text"><strong>正式開業！</strong></span></div>
+    <div class="milestone-timeline">
+      <div class="milestone-item">
+        <div class="milestone-dot"></div>
+        <div class="milestone-date-tag">6/26</div>
+        <div class="milestone-content">
+          <div class="milestone-title">消防設備　見積受領（柳様）</div>
+          <div class="milestone-sub">稟議申請へ</div>
+        </div>
+      </div>
+      <div class="milestone-item">
+        <div class="milestone-dot"></div>
+        <div class="milestone-date-tag">6月末</div>
+        <div class="milestone-content">
+          <div class="milestone-title">表題登記・保存登記　完了</div>
+          <div class="milestone-sub">大谷先生・村松司法書士</div>
+        </div>
+      </div>
+      <div class="milestone-item">
+        <div class="milestone-dot"></div>
+        <div class="milestone-date-tag">7月初旬</div>
+        <div class="milestone-content">
+          <div class="milestone-title">稟議承認　→　各工事着工</div>
+          <div class="milestone-sub">消防設備・エアコン・電子錠・補修</div>
+        </div>
+      </div>
+      <div class="milestone-item">
+        <div class="milestone-dot"></div>
+        <div class="milestone-date-tag">7月末</div>
+        <div class="milestone-content">
+          <div class="milestone-title">消防検査立合・工事完了・マットレス搬入</div>
+          <div class="milestone-sub">柳様・中山様立会</div>
+        </div>
+      </div>
+      <div class="milestone-item">
+        <div class="milestone-dot"></div>
+        <div class="milestone-date-tag">8月初旬</div>
+        <div class="milestone-content">
+          <div class="milestone-title">消防法令適合通知書　交付</div>
+          <div class="milestone-sub">交付まで約1週間</div>
+        </div>
+      </div>
+      <div class="milestone-item">
+        <div class="milestone-dot"></div>
+        <div class="milestone-date-tag">8月中旬</div>
+        <div class="milestone-content">
+          <div class="milestone-title">民泊開業届　提出</div>
+          <div class="milestone-sub">板尾先生（行政書士）</div>
+        </div>
+      </div>
+      <div class="milestone-item">
+        <div class="milestone-dot"></div>
+        <div class="milestone-date-tag">8月中旬</div>
+        <div class="milestone-content">
+          <div class="milestone-title">家具・家電・アメニティ　設置完了</div>
+          <div class="milestone-sub">水野さん・髙松さん</div>
+        </div>
+      </div>
+      <div class="milestone-item">
+        <div class="milestone-dot"></div>
+        <div class="milestone-date-tag">8月末</div>
+        <div class="milestone-content">
+          <div class="milestone-title">写真撮影・清掃ブリーフィング</div>
+          <div class="milestone-sub">OTA掲載用撮影</div>
+        </div>
+      </div>
+      <div class="milestone-item">
+        <div class="milestone-dot"></div>
+        <div class="milestone-date-tag">9/15</div>
+        <div class="milestone-content">
+          <div class="milestone-title">開業届　受理</div>
+          <div class="milestone-sub">住宅宿泊事業法</div>
+        </div>
+      </div>
+      <div class="milestone-item">
+        <div class="milestone-dot"></div>
+        <div class="milestone-date-tag">9/16</div>
+        <div class="milestone-content">
+          <div class="milestone-title">試泊（社内）・OTAサイト公開</div>
+          <div class="milestone-sub">最終確認</div>
+        </div>
+      </div>
+      <div class="milestone-item final">
+        <div class="milestone-dot final"></div>
+        <div class="milestone-date-tag">10/1</div>
+        <div class="milestone-content">
+          <div class="milestone-title">🎉　正式開業！</div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- フェーズ進捗 -->
+  <!-- フェーズ・ガントチャート -->
   <div class="card">
-    <div class="card-title">📊 フェーズ進捗</div>
-    <div class="timeline">
-      <div class="timeline-header">
-        <div>フェーズ</div>
-        <div>進捗</div>
-        <div>ステータス</div>
+    <div class="card-title">📊 フェーズ・工程表</div>
+    <div class="gantt-wrap">
+      <div class="gantt" id="gantt-chart">
+        <div class="gantt-header">
+          <div class="gantt-header-label">フェーズ</div>
+          <div class="gantt-months-row">
+            <div class="gantt-month">6月</div>
+            <div class="gantt-month">7月</div>
+            <div class="gantt-month">8月</div>
+            <div class="gantt-month">9月</div>
+            <div class="gantt-month">10月</div>
+          </div>
+        </div>
+        <div class="gantt-rows" id="gantt-rows" style="padding-top:18px;"></div>
       </div>
-      <div id="phase-rows"></div>
     </div>
   </div>
 </div>
@@ -559,17 +706,27 @@
 <div class="tab-content" id="tab-documents">
   <div class="section-title">📋 図面・資料</div>
   <div class="card" style="margin-bottom:16px;">
-    <div class="card-title">🔥 消防設備</div>
+    <div class="card-title">🔥 消防設備図面</div>
     <div class="docs-grid">
-      <div class="doc-card">
+      <a class="doc-card" href="1F消防設備図面.pdf" target="_blank" style="text-decoration:none;cursor:pointer;">
+        <div class="doc-icon">🔥</div>
+        <div class="doc-name">1F 消防設備図面</div>
+        <div class="doc-tag" style="background:#fef2f2;color:#ef4444;border-color:#fecaca;">PDF　→ 開く</div>
+      </a>
+      <a class="doc-card" href="2F消防設備図面.pdf" target="_blank" style="text-decoration:none;cursor:pointer;">
+        <div class="doc-icon">🔥</div>
+        <div class="doc-name">2F 消防設備図面</div>
+        <div class="doc-tag" style="background:#fef2f2;color:#ef4444;border-color:#fecaca;">PDF　→ 開く</div>
+      </a>
+      <div class="doc-card" style="opacity:0.6;border-style:dashed;">
         <div class="doc-icon">📐</div>
-        <div class="doc-name">平面・立面 消防用設備</div>
-        <div class="doc-tag">JWCAD / 柳様作成</div>
+        <div class="doc-name">平面・立面 消防用設備（JWCAD）</div>
+        <div class="doc-tag">柳様作成 / ローカル保管</div>
       </div>
     </div>
   </div>
   <div class="card" style="margin-bottom:16px;">
-    <div class="card-title">📐 設計図書</div>
+    <div class="card-title">📐 設計図書　<span style="font-size:11px;font-weight:500;color:#ef4444;background:#fef2f2;border:1px solid #fecaca;border-radius:4px;padding:2px 8px;">新築時の図書（参照用）</span></div>
     <div class="docs-grid">
       <div class="doc-card"><div class="doc-icon">🗺️</div><div class="doc-name">配置図<br><small style="color:#999">ゴミ集積所候補位置あり</small></div><div class="doc-tag">PDF</div></div>
       <div class="doc-card"><div class="doc-icon">📏</div><div class="doc-name">1階平面図</div><div class="doc-tag">PDF</div></div>
@@ -974,6 +1131,8 @@ const MEMBERS = [
   { name:'森下秀之', role:'工事・施工管理', org:'株式会社LIFEFUND', ext:false },
   { name:'水野萌', role:'インテリア・家電', org:'株式会社LIFEFUND', ext:false },
   { name:'宇田身江子', role:'看板・外構', org:'株式会社LIFEFUND', ext:false },
+  { name:'髙松', role:'マーケティング', org:'株式会社LIFEFUND', ext:false },
+  { name:'佐藤', role:'外構', org:'株式会社LIFEFUND', ext:false },
   { name:'板尾朋哉', role:'民泊開業届・行政手続き', org:'行政書士', ext:true },
   { name:'中山亘', role:'設計・消防適合申請', org:'Wrap Architect Design', ext:true },
   { name:'柳智宣', role:'消防設備工事', org:'正昴電工', ext:true },
