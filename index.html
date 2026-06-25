@@ -1486,9 +1486,9 @@ function renderTasks(filter) {
         <div class="task-meta">
           <span class="task-assignee" title="クリックで名前編集">
             <span class="task-avatar" style="background:${personColor(t.main||'')};">${personInitial(t.main||'')}</span>
-            <span class="editable-click" onclick="inlineEditText(this,'${t.id}','main')">${t.main || '未定'}</span>
+            <span class="editable-click" onclick="inlineEditAssignee(this,'${t.id}','main')">${t.main || '未定'}</span>
           </span>
-          ${t.sub ? `<span class="task-assignee"><span class="task-avatar sub" style="background:${personColor(t.sub)};"><span>${personInitial(t.sub)}</span></span><span class="editable-click" onclick="inlineEditText(this,'${t.id}','sub')">${t.sub}</span></span>` : ''}
+          ${t.sub ? `<span class="task-assignee"><span class="task-avatar sub" style="background:${personColor(t.sub)};"><span>${personInitial(t.sub)}</span></span><span class="editable-click" onclick="inlineEditAssignee(this,'${t.id}','sub')">${t.sub}</span></span>` : `<span class="task-assignee" style="opacity:0.4;font-size:11px;cursor:pointer;" onclick="inlineEditAssignee(this,'${t.id}','sub')">＋ サブ</span>`}
           <span class="task-cat editable-click" onclick="inlineEditTaskCat(this,'${t.id}')" title="クリックでカテゴリ変更">${t.cat}</span>
           ${depHtml}
           <span class="task-due" title="クリックで日付変更">📅 <span class="editable-click" onclick="inlineEditDate(this,'${t.id}','due')">${dueFmt}</span></span>
@@ -1554,6 +1554,50 @@ function cycleStatus(taskId) {
   const cycle = ['todo', 'doing', 'done', 'hold'];
   t.status = cycle[(cycle.indexOf(t.status) + 1) % cycle.length];
   saveLocal(); syncToCloud(); renderAll();
+}
+
+function inlineEditAssignee(el, taskId, field) {
+  const task = data.tasks.find(t => t.id === taskId);
+  if (!task) return;
+  const old = task[field] || '';
+  const sel = document.createElement('select');
+  sel.className = 'inline-input';
+  const opts = field === 'sub'
+    ? ['（なし）', ...MEMBERS.map(m => m.name)]
+    : ['未定', ...MEMBERS.map(m => m.name)];
+  opts.forEach(c => {
+    const o = document.createElement('option');
+    o.value = (c === '（なし）') ? '' : c;
+    o.textContent = c;
+    if ((old || (field==='sub'?'':' ')) === o.value) o.selected = true;
+    sel.appendChild(o);
+  });
+  el.replaceWith(sel); sel.focus();
+  const save = () => {
+    task[field] = sel.value;
+    saveLocal(); syncToCloud(); renderTasks(currentTaskFilter);
+  };
+  sel.addEventListener('change', save);
+  sel.addEventListener('blur', () => renderTasks(currentTaskFilter));
+}
+
+function inlineEditMemberSelect(el, collection, id, field, redraw) {
+  const item = collection.find(x => x.id === id);
+  if (!item) return;
+  const old = item[field] || '';
+  const sel = document.createElement('select');
+  sel.className = 'inline-input';
+  ['（なし）', ...MEMBERS.map(m => m.name)].forEach(c => {
+    const o = document.createElement('option');
+    o.value = c === '（なし）' ? '' : c;
+    o.textContent = c;
+    if (old === o.value) o.selected = true;
+    sel.appendChild(o);
+  });
+  el.replaceWith(sel); sel.focus();
+  const save = () => { item[field] = sel.value; saveLocal(); syncToCloud(); redraw(); };
+  sel.addEventListener('change', save);
+  sel.addEventListener('blur', redraw);
 }
 
 function inlineEditTaskCat(el, taskId) {
@@ -1739,7 +1783,7 @@ function renderSupplies(filter) {
     <td style="font-weight:600;"><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','name','text')">${s.name}</span></td>
     <td><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','cat','select-cat')">${s.cat}</span></td>
     <td><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','qty','text')">${s.qty || '—'}</span></td>
-    <td><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','person','text')">${s.person || '—'}</span></td>
+    <td><span class="editable-click" onclick="inlineEditMemberSelect(this,data.supplies,'${s.id}','person',()=>renderSupplies(currentSupplyFilter||'all'))">${s.person || '—'}</span></td>
     <td><span class="editable-click" style="background:${statusColor[s.status]||'#f1f5f9'};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;" onclick="inlineEditSupply(this,'${s.id}','status','select-status')">${s.status}</span></td>
     <td><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','due','date')">${s.due || '—'}</span></td>
     <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','price','number')">${s.price ? '¥'+Number(s.price).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
@@ -1771,7 +1815,7 @@ function renderBudget() {
   document.getElementById('budget-tbody').innerHTML = items.length ? items.map(b => `<tr>
     <td style="font-weight:600;"><span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','name','text')">${b.name}</span></td>
     <td><span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','cat','select-cat')">${b.cat}</span></td>
-    <td><span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','person','text')">${b.person || '—'}</span></td>
+    <td><span class="editable-click" onclick="inlineEditMemberSelect(this,data.budget,'${b.id}','person',()=>renderBudget())">${b.person || '—'}</span></td>
     <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','est','number')">${b.est ? '¥'+Number(b.est).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
     <td><span class="editable-click" style="background:${ringiColor[b.ringi]||'#f1f5f9'};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;" onclick="inlineEditBudget(this,'${b.id}','ringi','select-ringi')">${b.ringi}</span></td>
     <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','order','number')">${b.order ? '¥'+Number(b.order).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
