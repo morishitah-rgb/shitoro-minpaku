@@ -268,10 +268,31 @@
   .task-title { font-weight: 700; font-size: 14px; color: var(--navy); margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
   .task-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
   .task-assignee {
-    display: flex; align-items: center; gap: 4px;
-    background: #f0f4ff; padding: 2px 8px; border-radius: 20px;
-    font-size: 11px; color: var(--navy); font-weight: 600;
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #f0f4ff; padding: 2px 10px 2px 3px; border-radius: 20px;
+    font-size: 12px; color: var(--navy); font-weight: 600;
   }
+  .task-avatar {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    font-size: 11px; font-weight: 800; color: white; flex-shrink: 0;
+    letter-spacing: -0.5px;
+  }
+  .task-avatar.sub { opacity: 0.75; }
+  .assignee-filter-wrap {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 8px 0 4px;
+  }
+  .assignee-filter-label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+  .assignee-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 12px 4px 4px; border-radius: 20px; cursor: pointer;
+    border: 1.5px solid var(--border); background: white;
+    font-size: 12px; font-weight: 600; color: var(--navy);
+    transition: all 0.15s;
+  }
+  .assignee-chip:hover { border-color: var(--gold); }
+  .assignee-chip.active { border-color: transparent; color: white; }
   .task-cat { font-size: 11px; color: var(--text-muted); background: #f1f5f9; padding: 2px 8px; border-radius: 20px; }
   .task-dep { font-size: 11px; color: #ef4444; background: #fee2e2; padding: 2px 8px; border-radius: 20px; }
   .task-actions { display: flex; gap: 6px; align-items: flex-start; }
@@ -618,7 +639,7 @@
 <div class="tab-content" id="tab-tasks">
   <div class="section-title">✅ タスク管理</div>
   <div class="sync-bar"><div class="sync-dot"></div><span id="sync-status">データ読み込み中...</span></div>
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; flex-wrap:wrap; gap:8px;">
     <div class="task-filters" id="task-filters">
       <button class="filter-btn active" data-filter="all">すべて</button>
       <button class="filter-btn" data-filter="消防">🔥 消防</button>
@@ -629,6 +650,9 @@
       <button class="filter-btn" data-filter="運営">🏨 運営</button>
     </div>
     <button class="btn btn-gold" onclick="openModal('task-modal')">＋ タスク追加</button>
+  </div>
+  <div class="assignee-filter-wrap" id="assignee-filter-wrap">
+    <span class="assignee-label" style="font-size:11px;font-weight:600;color:var(--text-muted);">👤 担当者：</span>
   </div>
   <div id="task-list"></div>
 </div>
@@ -1392,10 +1416,22 @@ function renderTasks(filter) {
     return;
   }
 
+  // 担当者フィルター
+  const byAssignee = currentAssigneeFilter
+    ? filtered.filter(t => t.main === currentAssigneeFilter || t.sub === currentAssigneeFilter)
+    : filtered;
+
+  renderAssigneeFilter();
+
   // 依存関係で前提が未完了のものをロック
   const doneIds = new Set(tasks.filter(t => t.status === 'done').map(t => t.id));
 
-  container.innerHTML = filtered.map(t => {
+  if (!byAssignee.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">👤</div><div class="empty-state-text">該当するタスクがありません</div></div>`;
+    return;
+  }
+
+  container.innerHTML = byAssignee.map(t => {
     const locked = t.dep && !doneIds.has(t.dep);
     const depTask = t.dep ? tasks.find(x => x.id === t.dep) : null;
     const depHtml = locked && depTask ? `<span class="task-dep">🔒 「${depTask.title}」完了後</span>` : '';
@@ -1409,8 +1445,11 @@ function renderTasks(filter) {
         </div>
         ${t.note ? `<div style="font-size:12px;color:var(--text-muted);margin:2px 0 4px;">${t.note}</div>` : ''}
         <div class="task-meta">
-          <span class="task-assignee" title="クリックで担当変更">👤 <span class="editable-click" onclick="inlineEditText(this,'${t.id}','main')">${t.main || '未定'}</span></span>
-          ${t.sub ? `<span class="task-assignee">👤 <span class="editable-click" onclick="inlineEditText(this,'${t.id}','sub')">${t.sub}</span></span>` : ''}
+          <span class="task-assignee" title="クリックで名前編集">
+            <span class="task-avatar" style="background:${personColor(t.main||'')};">${personInitial(t.main||'')}</span>
+            <span class="editable-click" onclick="inlineEditText(this,'${t.id}','main')">${t.main || '未定'}</span>
+          </span>
+          ${t.sub ? `<span class="task-assignee"><span class="task-avatar sub" style="background:${personColor(t.sub)};"><span>${personInitial(t.sub)}</span></span><span class="editable-click" onclick="inlineEditText(this,'${t.id}','sub')">${t.sub}</span></span>` : ''}
           <span class="task-cat">${t.cat}</span>
           ${depHtml}
           <span class="task-due" title="クリックで日付変更">📅 <span class="editable-click" onclick="inlineEditDate(this,'${t.id}','due')">${dueFmt}</span></span>
@@ -1484,8 +1523,46 @@ let budgetUnlocked = sessionStorage.getItem('budget_unlocked') === '1';
 function getBudgetPin() {
   try {
     const s = JSON.parse(localStorage.getItem(STORAGE_KEY + '_settings') || '{}');
-    return s.budget_pin || '1234';
-  } catch(e) { return '1234'; }
+    return s.budget_pin || '8910';
+  } catch(e) { return '8910'; }
+}
+
+// ===== PERSON AVATAR =====
+const PERSON_COLORS = ['#1a2744','#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#e97b2c','#c9a84c'];
+function personColor(name) {
+  if (!name) return '#94a3b8';
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  return PERSON_COLORS[Math.abs(h) % PERSON_COLORS.length];
+}
+function personInitial(name) {
+  if (!name) return '?';
+  // 漢字なら1文字、英語なら頭文字
+  return name.charAt(0);
+}
+
+let currentAssigneeFilter = '';
+function renderAssigneeFilter() {
+  const wrap = document.getElementById('assignee-filter-wrap');
+  if (!wrap) return;
+  const tasks = data.tasks || [];
+  const people = [...new Set(tasks.flatMap(t => [t.main, t.sub].filter(Boolean)))].sort();
+  const label = '<span class="assignee-label" style="font-size:11px;font-weight:600;color:var(--text-muted);">👤 担当者：</span>';
+  const allChip = `<span class="assignee-chip${currentAssigneeFilter===''?' active':''}" style="${currentAssigneeFilter===''?'background:var(--navy);border-color:var(--navy);':''}\" onclick="setAssigneeFilter('')">すべて</span>`;
+  const chips = people.map(p => {
+    const active = currentAssigneeFilter === p;
+    const bg = personColor(p);
+    return `<span class="assignee-chip${active?' active':''}" style="${active?`background:${bg};border-color:${bg};`:''}" onclick="setAssigneeFilter('${p}')">
+      <span class="task-avatar" style="background:${bg};width:18px;height:18px;font-size:10px;">${personInitial(p)}</span>${p}
+    </span>`;
+  }).join('');
+  wrap.innerHTML = label + allChip + chips;
+}
+
+function setAssigneeFilter(person) {
+  currentAssigneeFilter = person;
+  renderAssigneeFilter();
+  renderTasks(currentTaskFilter);
 }
 
 function tryUnlockBudget() {
