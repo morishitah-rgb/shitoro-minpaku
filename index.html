@@ -486,6 +486,43 @@
   .stat-item { text-align: center; }
   .stat-num { font-size: 20px; font-weight: 700; }
   .stat-label { font-size: 10px; opacity: 0.7; }
+
+  /* 差異セル */
+  .diff-ok { color: #059669; font-weight: 700; }
+  .diff-over { color: #dc2626; font-weight: 700; }
+
+  /* 添付ボタン */
+  .attach-btn {
+    background: none; border: 1px solid #e2e8f0; border-radius: 6px;
+    cursor: pointer; font-size: 14px; padding: 2px 6px; color: #64748b;
+    transition: all .15s;
+  }
+  .attach-btn:hover { background: #f8fafc; border-color: #c9a84c; }
+  .attach-btn.has-attach { background: #fef9ec; border-color: #c9a84c; color: #92680a; }
+
+  /* モーダル内OCR添付ボタン */
+  .attach-ocr-btn {
+    background: none; border: 1px solid #e2e8f0; border-radius: 6px;
+    cursor: pointer; font-size: 11px; padding: 1px 6px; color: #64748b;
+    margin-left: 6px; vertical-align: middle; transition: all .15s;
+  }
+  .attach-ocr-btn:hover { background: #fef9ec; border-color: #c9a84c; color: #92680a; }
+
+  /* OCR確認ダイアログ */
+  #ocr-dialog { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; }
+  #ocr-dialog.open { display: flex; }
+  #ocr-dialog .ocr-box {
+    background: #fff; border-radius: 16px; padding: 28px; max-width: 400px; width: 92%;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  }
+  #ocr-dialog .ocr-preview { width: 100%; max-height: 200px; object-fit: contain; border-radius: 8px; margin: 12px 0; border: 1px solid #e2e8f0; }
+  #ocr-dialog .ocr-amount-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; }
+  #ocr-dialog .ocr-amount-row input { flex: 1; padding: 8px 12px; border: 1.5px solid #c9a84c; border-radius: 8px; font-size: 16px; font-weight: 700; }
+  #ocr-dialog .ocr-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+  #ocr-dialog .ocr-hint { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+
+  /* hidden file input */
+  #attach-file-input { display: none; }
 </style>
 </head>
 <body>
@@ -708,7 +745,7 @@
         <thead>
           <tr>
             <th>品名</th><th>カテゴリ</th><th>数量</th><th>担当</th>
-            <th>ステータス</th><th>納期目安</th><th>金額（税込）</th><th>操作</th>
+            <th>ステータス</th><th>納期目安</th><th>予算（税込）</th><th>実績（税込）</th><th>差異</th><th>添付</th><th>操作</th>
           </tr>
         </thead>
         <tbody id="supply-tbody"></tbody>
@@ -731,7 +768,7 @@
         <thead>
           <tr>
             <th>費目</th><th>カテゴリ</th><th>担当</th>
-            <th>見積金額</th><th>稟議</th><th>発注金額</th><th>支払済</th><th>メモ</th><th>操作</th>
+            <th>予算（見積）</th><th>稟議</th><th>実績（発注）</th><th>差異</th><th>添付</th><th>メモ</th><th>操作</th>
           </tr>
         </thead>
         <tbody id="budget-tbody"></tbody>
@@ -1163,9 +1200,15 @@
         <label class="form-label">納期目安</label>
         <input type="date" class="form-input" id="supply-due-input">
       </div>
+    </div>
+    <div class="form-row">
       <div class="form-group">
-        <label class="form-label">金額（税込）</label>
+        <label class="form-label">予算金額（税込）<button type="button" class="attach-ocr-btn" onclick="openAttachForModal('supply','est')" title="見積書を撮影して自動入力">📎 見積添付</button></label>
         <input type="number" class="form-input" id="supply-price-input" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">実績金額（税込）<button type="button" class="attach-ocr-btn" onclick="openAttachForModal('supply','actual')" title="レシートを撮影して自動入力">📷 レシート</button></label>
+        <input type="number" class="form-input" id="supply-actual-input" placeholder="0">
       </div>
     </div>
     <div class="modal-actions">
@@ -1204,12 +1247,12 @@
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">見積金額（税込）</label>
+        <label class="form-label">予算金額（税込）<button type="button" class="attach-ocr-btn" onclick="openAttachForModal('budget','est')" title="見積書を撮影して自動入力">📎 見積添付</button></label>
         <input type="number" class="form-input" id="budget-est-input" placeholder="0">
       </div>
       <div class="form-group">
-        <label class="form-label">発注金額（税込）</label>
-        <input type="number" class="form-input" id="budget-order-input" placeholder="0">
+        <label class="form-label">実績金額（税込）<button type="button" class="attach-ocr-btn" onclick="openAttachForModal('budget','actual')" title="レシートを撮影して自動入力">📷 レシート</button></label>
+        <input type="number" class="form-input" id="budget-actual-input" placeholder="0">
       </div>
     </div>
     <div class="form-row">
@@ -1220,10 +1263,6 @@
           <option value="申請中">申請中</option>
           <option value="承認">承認済</option>
         </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">支払済金額</label>
-        <input type="number" class="form-input" id="budget-paid-input" placeholder="0">
       </div>
     </div>
     <div class="form-group">
@@ -1236,6 +1275,25 @@
     </div>
   </div>
 </div>
+
+<!-- OCR確認ダイアログ -->
+<div id="ocr-dialog">
+  <div class="ocr-box">
+    <div style="font-weight:700;font-size:16px;color:var(--navy);">📎 添付・金額読み取り</div>
+    <img id="ocr-preview-img" class="ocr-preview" src="" alt="添付画像">
+    <div style="font-size:13px;color:var(--text-muted);margin-top:8px;">読み取った金額（修正可）</div>
+    <div class="ocr-amount-row">
+      <span style="font-size:18px;">¥</span>
+      <input type="number" id="ocr-amount-input" placeholder="金額を入力">
+    </div>
+    <div class="ocr-hint" id="ocr-hint-text">画像から金額を自動検出します。見つからない場合は手入力してください。</div>
+    <div class="ocr-actions">
+      <button class="btn" onclick="closeOcrDialog()" style="background:#f1f5f9;color:var(--navy);">キャンセル</button>
+      <button class="btn btn-gold" onclick="applyOcrAmount()">この金額を適用</button>
+    </div>
+  </div>
+</div>
+<input type="file" id="attach-file-input" accept="image/*">
 
 <script>
 // ===== DATA =====
@@ -1828,11 +1886,20 @@ function renderSupplies(filter) {
   const items = data.supplies || [];
   const filtered = currentSupplyFilter === 'all' ? items : items.filter(s => s.cat === currentSupplyFilter);
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted);">備品データがありません。「追加」ボタンから登録してください。</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text-muted);">備品データがありません。「追加」ボタンから登録してください。</td></tr>';
     return;
   }
   const statusColor = { '未着手':'#f1f5f9', '検討中':'#dbeafe', '発注済':'#fef3c7', '納品済':'#d1fae5' };
-  tbody.innerHTML = filtered.map(s => `<tr>
+  tbody.innerHTML = filtered.map(s => {
+    const est = Number(s.price) || 0;
+    const act = Number(s.actual_price) || 0;
+    const diff = est - act;
+    const hasBoth = est > 0 && act > 0;
+    const diffHtml = !hasBoth ? '<span style="color:#94a3b8;">—</span>'
+      : `<span class="diff-cell ${diff >= 0 ? 'diff-ok' : 'diff-over'}">${diff >= 0 ? '-' : '+'}¥${Math.abs(diff).toLocaleString()}</span>`;
+    const attachKey = 'attach_s_' + s.id;
+    const hasAttach = !!localStorage.getItem(STORAGE_KEY + '_' + attachKey);
+    return `<tr>
     <td style="font-weight:600;"><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','name','text')">${s.name}</span></td>
     <td><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','cat','select-cat')">${s.cat}</span></td>
     <td><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','qty','text')">${s.qty || '—'}</span></td>
@@ -1840,8 +1907,12 @@ function renderSupplies(filter) {
     <td><span class="editable-click" style="background:${statusColor[s.status]||'#f1f5f9'};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;" onclick="inlineEditSupply(this,'${s.id}','status','select-status')">${s.status}</span></td>
     <td><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','due','date')">${s.due || '—'}</span></td>
     <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','price','number')">${s.price ? '¥'+Number(s.price).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
+    <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','actual_price','number')">${s.actual_price ? '¥'+Number(s.actual_price).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
+    <td class="amount">${budgetUnlocked ? diffHtml : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
+    <td><button class="attach-btn ${hasAttach ? 'has-attach' : ''}" onclick="openAttach('supply','${s.id}')" title="見積・レシートを添付">${hasAttach ? '📎✓' : '📎'}</button></td>
     <td><button class="btn btn-sm btn-danger" onclick="deleteSupply('${s.id}')">✕</button></td>
-  </tr>`).join('');
+  </tr>`;
+  }).join('');
 }
 
 function renderBudget() {
@@ -1854,55 +1925,79 @@ function renderBudget() {
       : `<div class="lock-banner"><span class="lock-banner-text">🔒 金額は社員PINでのみ表示されます</span><button class="btn btn-gold btn-sm" onclick="tryUnlockBudget()">PINで解除</button></div>`;
   }
   const supplies = data.supplies || [];
-  const supplyTotal = supplies.reduce((s, x) => s + (Number(x.price) || 0), 0);
-  const totalEst = items.reduce((s, b) => s + (Number(b.est) || 0), 0) + supplyTotal;
-  const totalOrder = items.reduce((s, b) => s + (Number(b.order) || 0), 0);
-  const totalPaid = items.reduce((s, b) => s + (Number(b.paid) || 0), 0);
-  const A = v => amountHtml(v, 'tryUnlockBudget()');
+  const supplyEstTotal = supplies.reduce((s, x) => s + (Number(x.price) || 0), 0);
+  const supplyActTotal = supplies.reduce((s, x) => s + (Number(x.actual_price) || 0), 0);
+  const totalEst = items.reduce((s, b) => s + (Number(b.est) || 0), 0) + supplyEstTotal;
+  const totalAct = items.reduce((s, b) => s + (Number(b.actual) || 0), 0) + supplyActTotal;
+  const totalDiff = totalEst - totalAct;
   const sumVal = v => budgetUnlocked ? '¥' + v.toLocaleString() : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`;
+  const sumDiff = (d) => {
+    if (!budgetUnlocked) return `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`;
+    if (totalEst === 0 && totalAct === 0) return '—';
+    return `<span class="${d >= 0 ? 'diff-ok' : 'diff-over'}" style="font-size:1.1em;font-weight:700;">${d >= 0 ? '-' : '+'}¥${Math.abs(d).toLocaleString()}</span>`;
+  };
   document.getElementById('budget-summary').innerHTML = `
-    <div class="budget-stat"><div class="budget-stat-label">見積合計</div><div class="budget-stat-value">${sumVal(totalEst)}</div><div class="budget-stat-sub">工事費＋備品費</div></div>
-    <div class="budget-stat"><div class="budget-stat-label">発注合計</div><div class="budget-stat-value">${sumVal(totalOrder)}</div><div class="budget-stat-sub">税込</div></div>
-    <div class="budget-stat"><div class="budget-stat-label">支払済</div><div class="budget-stat-value">${sumVal(totalPaid)}</div><div class="budget-stat-sub">税込</div></div>
+    <div class="budget-stat"><div class="budget-stat-label">予算合計</div><div class="budget-stat-value">${sumVal(totalEst)}</div><div class="budget-stat-sub">工事費＋備品費</div></div>
+    <div class="budget-stat"><div class="budget-stat-label">実績合計</div><div class="budget-stat-value">${sumVal(totalAct)}</div><div class="budget-stat-sub">税込</div></div>
+    <div class="budget-stat"><div class="budget-stat-label">差異</div><div class="budget-stat-value">${sumDiff(totalDiff)}</div><div class="budget-stat-sub">${totalDiff >= 0 ? '予算内' : '予算超過'}</div></div>
     <div class="budget-stat"><div class="budget-stat-label">費目数</div><div class="budget-stat-value">${items.length + 1}</div><div class="budget-stat-sub">件（備品含む）</div></div>`;
 
   const ringiColor = { '未':'#fee2e2', '申請中':'#fef3c7', '承認':'#d1fae5' };
   const statusColor = { '未着手':'#f1f5f9', '検討中':'#dbeafe', '発注済':'#fef3c7', '納品済':'#d1fae5' };
 
   // 備品費集計行の内訳（展開時）
-  const supplySubRows = suppliesRowExpanded ? supplies.map(s => `<tr class="supply-subrow">
+  const supplySubRows = suppliesRowExpanded ? supplies.map(s => {
+    const se = Number(s.price)||0, sa = Number(s.actual_price)||0, sd = se - sa;
+    const sdHtml = (se>0&&sa>0) ? `<span class="${sd>=0?'diff-ok':'diff-over'}" style="font-size:11px;">${sd>=0?'-':'+'}¥${Math.abs(sd).toLocaleString()}</span>` : '—';
+    return `<tr class="supply-subrow">
     <td style="padding-left:28px;font-size:12px;color:var(--navy);">└ ${s.name}</td>
     <td style="font-size:12px;color:var(--text-muted);">${s.cat}</td>
     <td style="font-size:12px;">${s.person || '—'}</td>
     <td class="amount" style="font-size:12px;">${budgetUnlocked ? (s.price ? '¥'+Number(s.price).toLocaleString() : '—') : '<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>'}</td>
-    <td><span style="background:${statusColor[s.status]||'#f1f5f9'};padding:2px 8px;border-radius:20px;font-size:11px;">${s.status}</span></td>
-    <td style="font-size:12px;color:var(--text-muted);" colspan="2">${s.due || '—'}</td>
-    <td style="font-size:12px;color:var(--text-muted);">${s.qty ? s.qty+'個' : ''}</td>
+    <td>—</td>
+    <td class="amount" style="font-size:12px;">${budgetUnlocked ? (s.actual_price ? '¥'+Number(s.actual_price).toLocaleString() : '—') : '<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>'}</td>
+    <td class="amount" style="font-size:12px;">${budgetUnlocked ? sdHtml : '<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>'}</td>
     <td></td>
-  </tr>`).join('') : '';
+    <td style="font-size:11px;color:var(--text-muted);">${s.status}</td>
+    <td></td>
+  </tr>`;
+  }).join('') : '';
 
   // 備品費集計行
+  const aggDiff = supplyEstTotal - supplyActTotal;
+  const aggDiffHtml = (supplyEstTotal>0&&supplyActTotal>0)
+    ? `<span class="${aggDiff>=0?'diff-ok':'diff-over'}">${aggDiff>=0?'-':'+'}¥${Math.abs(aggDiff).toLocaleString()}</span>` : '—';
   const supplyAggRow = `<tr class="supplies-agg-row" onclick="toggleSuppliesRow()">
     <td style="font-weight:700;">📦 備品費（一式）</td>
     <td style="font-size:12px;color:var(--text-muted);">家具・家電・アメニティ等</td>
     <td style="font-size:12px;color:var(--text-muted);">—</td>
-    <td class="amount">${budgetUnlocked ? '<b>¥'+supplyTotal.toLocaleString()+'</b>' : '<span class="amount-locked" onclick="event.stopPropagation();tryUnlockBudget()">🔒 ****</span>'}</td>
-    <td>—</td><td>—</td><td>—</td>
+    <td class="amount">${budgetUnlocked ? '<b>¥'+supplyEstTotal.toLocaleString()+'</b>' : '<span class="amount-locked" onclick="event.stopPropagation();tryUnlockBudget()">🔒 ****</span>'}</td>
+    <td>—</td>
+    <td class="amount">${budgetUnlocked ? '<b>¥'+supplyActTotal.toLocaleString()+'</b>' : '<span class="amount-locked" onclick="event.stopPropagation();tryUnlockBudget()">🔒 ****</span>'}</td>
+    <td class="amount">${budgetUnlocked ? aggDiffHtml : '<span class="amount-locked" onclick="event.stopPropagation();tryUnlockBudget()">🔒 ****</span>'}</td>
+    <td></td>
     <td style="font-size:12px;color:var(--text-muted);">備品タブより自動集計（${supplies.length}件）</td>
     <td style="font-size:18px;line-height:1;">${suppliesRowExpanded ? '▲' : '▼'}</td>
   </tr>${supplySubRows}`;
 
-  document.getElementById('budget-tbody').innerHTML = (items.length ? items.map(b => `<tr>
+  document.getElementById('budget-tbody').innerHTML = (items.length ? items.map(b => {
+    const be = Number(b.est)||0, ba = Number(b.actual)||0, bd = be - ba;
+    const diffHtml = (be>0&&ba>0) ? `<span class="${bd>=0?'diff-ok':'diff-over'}">${bd>=0?'-':'+'}¥${Math.abs(bd).toLocaleString()}</span>` : '<span style="color:#94a3b8;">—</span>';
+    const attachKey = 'attach_b_' + b.id;
+    const hasAttach = !!localStorage.getItem(STORAGE_KEY + '_' + attachKey);
+    return `<tr>
     <td style="font-weight:600;"><span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','name','text')">${b.name}</span></td>
     <td><span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','cat','select-cat')">${b.cat}</span></td>
     <td><span class="editable-click" onclick="inlineEditMemberSelect(this,data.budget,'${b.id}','person',()=>renderBudget())">${b.person || '—'}</span></td>
     <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','est','number')">${b.est ? '¥'+Number(b.est).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
     <td><span class="editable-click" style="background:${ringiColor[b.ringi]||'#f1f5f9'};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;" onclick="inlineEditBudget(this,'${b.id}','ringi','select-ringi')">${b.ringi}</span></td>
-    <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','order','number')">${b.order ? '¥'+Number(b.order).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
-    <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','paid','number')">${b.paid ? '¥'+Number(b.paid).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
+    <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','actual','number')">${b.actual ? '¥'+Number(b.actual).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
+    <td class="amount">${budgetUnlocked ? diffHtml : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
+    <td><button class="attach-btn ${hasAttach ? 'has-attach' : ''}" onclick="openAttach('budget','${b.id}')" title="見積・領収書を添付">${hasAttach ? '📎✓' : '📎'}</button></td>
     <td><span class="editable-click" style="font-size:12px;color:var(--text-muted);" onclick="inlineEditBudget(this,'${b.id}','memo','text')">${b.memo || '—'}</span></td>
     <td><button class="btn btn-sm btn-danger" onclick="deleteBudget('${b.id}')">✕</button></td>
-  </tr>`).join('') : '') + supplyAggRow;
+  </tr>`;
+  }).join('') : '') + supplyAggRow;
 }
 
 let suppliesRowExpanded = false;
@@ -1988,6 +2083,7 @@ function saveSupply() {
     status: document.getElementById('supply-status-input').value,
     due: document.getElementById('supply-due-input').value,
     price: document.getElementById('supply-price-input').value,
+    actual_price: document.getElementById('supply-actual-input').value,
   };
   if (id) { const i = data.supplies.findIndex(x => x.id === id); if (i >= 0) data.supplies[i] = item; }
   else data.supplies.push(item);
@@ -2005,6 +2101,7 @@ function editSupply(id) {
   document.getElementById('supply-status-input').value = s.status;
   document.getElementById('supply-due-input').value = s.due || '';
   document.getElementById('supply-price-input').value = s.price || '';
+  document.getElementById('supply-actual-input').value = s.actual_price || '';
   openModal('supply-modal');
 }
 
@@ -2023,9 +2120,8 @@ function saveBudget() {
     name, cat: document.getElementById('budget-cat-input').value,
     person: document.getElementById('budget-person-input').value,
     est: document.getElementById('budget-est-input').value,
-    order: document.getElementById('budget-order-input').value,
+    actual: document.getElementById('budget-actual-input').value,
     ringi: document.getElementById('budget-ringi-input').value,
-    paid: document.getElementById('budget-paid-input').value,
     memo: document.getElementById('budget-memo-input').value,
   };
   if (id) { const i = data.budget.findIndex(x => x.id === id); if (i >= 0) data.budget[i] = item; }
@@ -2041,9 +2137,8 @@ function editBudget(id) {
   document.getElementById('budget-cat-input').value = b.cat;
   document.getElementById('budget-person-input').value = b.person || '';
   document.getElementById('budget-est-input').value = b.est || '';
-  document.getElementById('budget-order-input').value = b.order || '';
+  document.getElementById('budget-actual-input').value = b.actual || '';
   document.getElementById('budget-ringi-input').value = b.ringi;
-  document.getElementById('budget-paid-input').value = b.paid || '';
   document.getElementById('budget-memo-input').value = b.memo || '';
   openModal('budget-modal');
 }
@@ -2052,6 +2147,102 @@ function deleteBudget(id) {
   if (!confirm('削除しますか？')) return;
   data.budget = data.budget.filter(x => x.id !== id);
   saveLocal(); syncToCloud(); renderBudget();
+}
+
+// ===== ATTACH / OCR =====
+let _ocrCtx = null; // { type:'budget'|'supply', id, field:'est'|'actual', inputId }
+
+function openAttach(type, id) {
+  // テーブル行の📎ボタン → 添付のみ（金額は自動入力しない）
+  _ocrCtx = { type, id, field: null, inputId: null };
+  const input = document.getElementById('attach-file-input');
+  input.removeAttribute('capture');
+  input.onchange = _handleAttachFile;
+  input.value = '';
+  input.click();
+}
+
+function openAttachForModal(type, field) {
+  // モーダル内ボタン → OCRで金額を自動入力
+  const inputId = type === 'budget'
+    ? (field === 'est' ? 'budget-est-input' : 'budget-actual-input')
+    : (field === 'est' ? 'supply-price-input' : 'supply-actual-input');
+  _ocrCtx = { type, id: null, field, inputId };
+  const input = document.getElementById('attach-file-input');
+  input.setAttribute('capture', 'environment');
+  input.onchange = _handleAttachFile;
+  input.value = '';
+  input.click();
+}
+
+function _handleAttachFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const b64 = ev.target.result;
+    // 添付画像をlocalStorageに保存（行ボタンの場合はIDが必要）
+    if (_ocrCtx.id) {
+      const key = STORAGE_KEY + '_attach_' + _ocrCtx.type[0] + '_' + _ocrCtx.id;
+      try { localStorage.setItem(key, b64); } catch(err) { console.warn('添付保存失敗:', err); }
+    }
+    // OCR確認ダイアログを表示
+    document.getElementById('ocr-preview-img').src = b64;
+    document.getElementById('ocr-amount-input').value = '';
+    document.getElementById('ocr-hint-text').textContent = '金額を読み取り中...';
+    document.getElementById('ocr-dialog').classList.add('open');
+    _runOcr(b64);
+    // 再レンダーして添付マークを更新
+    if (_ocrCtx.id) { _ocrCtx.type === 'budget' ? renderBudget() : renderSupplies(currentSupplyFilter||'all'); }
+  };
+  reader.readAsDataURL(file);
+}
+
+function _runOcr(b64) {
+  const hint = document.getElementById('ocr-hint-text');
+  const amtInput = document.getElementById('ocr-amount-input');
+  // base64からBlobを作りFormDataでOCR.Spaceへ送信
+  fetch('https://api.ocr.space/parse/image', {
+    method: 'POST',
+    headers: { apikey: 'helloworld' },
+    body: (() => {
+      const fd = new FormData();
+      fd.append('base64Image', b64);
+      fd.append('language', 'jpn');
+      fd.append('isOverlayRequired', 'false');
+      return fd;
+    })()
+  })
+  .then(r => r.json())
+  .then(json => {
+    const text = (json.ParsedResults || []).map(r => r.ParsedText || '').join(' ');
+    // 金額抽出: ¥12,345 や 12345 の形式
+    const matches = text.match(/[¥￥]?\s*([0-9]{1,3}(?:,[0-9]{3})+|[0-9]{4,})/g) || [];
+    const amounts = matches.map(m => parseInt(m.replace(/[¥￥,\s]/g, ''), 10)).filter(n => n > 0);
+    if (amounts.length > 0) {
+      const best = amounts.reduce((a, b) => b > a ? b : a, 0);
+      amtInput.value = best;
+      hint.textContent = `金額候補: ${amounts.map(n=>'¥'+n.toLocaleString()).join(' / ')}　最大値を選択しました。`;
+    } else {
+      hint.textContent = '金額を自動検出できませんでした。手入力してください。';
+    }
+  })
+  .catch(() => {
+    hint.textContent = 'OCR読み取りに失敗しました。手入力してください。';
+  });
+}
+
+function applyOcrAmount() {
+  const val = document.getElementById('ocr-amount-input').value;
+  if (_ocrCtx && _ocrCtx.inputId) {
+    const el = document.getElementById(_ocrCtx.inputId);
+    if (el) { el.value = val; el.focus(); }
+  }
+  closeOcrDialog();
+}
+
+function closeOcrDialog() {
+  document.getElementById('ocr-dialog').classList.remove('open');
 }
 
 // ===== SETTINGS =====
@@ -2144,11 +2335,11 @@ function openModal(id) {
   }
   if (id === 'supply-modal') {
     document.getElementById('supply-edit-id').value = '';
-    ['supply-name-input','supply-qty-input','supply-due-input','supply-price-input'].forEach(x => document.getElementById(x).value = '');
+    ['supply-name-input','supply-qty-input','supply-due-input','supply-price-input','supply-actual-input'].forEach(x => { const el = document.getElementById(x); if(el) el.value = ''; });
   }
   if (id === 'budget-modal') {
     document.getElementById('budget-edit-id').value = '';
-    ['budget-name-input','budget-est-input','budget-order-input','budget-paid-input','budget-memo-input'].forEach(x => document.getElementById(x).value = '');
+    ['budget-name-input','budget-est-input','budget-actual-input','budget-memo-input'].forEach(x => { const el = document.getElementById(x); if(el) el.value = ''; });
     document.getElementById('budget-ringi-input').value = '未';
   }
   document.getElementById(id).classList.add('open');
