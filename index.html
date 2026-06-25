@@ -221,6 +221,33 @@
     font-size: 9px; font-weight: 700; color: #ef4444; white-space: nowrap;
   }
 
+  /* ===== INLINE EDIT ===== */
+  .editable-click {
+    cursor: pointer; border-bottom: 1.5px dashed var(--gold-light);
+    padding-bottom: 1px; transition: border-color 0.15s, color 0.15s;
+    display: inline;
+  }
+  .editable-click:hover { border-bottom-color: var(--gold); color: var(--gold); }
+  .inline-input {
+    font-size: inherit; font-family: inherit; font-weight: inherit; color: var(--navy);
+    border: 1.5px solid var(--gold); border-radius: 4px; padding: 2px 6px;
+    outline: none; background: #fefdf5; min-width: 80px;
+  }
+  .inline-input[type="date"] { width: 140px; }
+  /* ===== PIN LOCK ===== */
+  .amount-locked {
+    cursor: pointer; color: var(--text-muted); font-style: italic;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .amount-locked:hover { color: var(--navy); }
+  .lock-banner {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #fef9ec; border: 1px solid var(--gold-light);
+    border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: 13px;
+    gap: 8px; flex-wrap: wrap;
+  }
+  .lock-banner-text { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--navy); }
+
   /* ===== TASKS ===== */
   .task-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
   .filter-btn {
@@ -609,6 +636,7 @@
 <!-- ③ 備品・発注 -->
 <div class="tab-content" id="tab-supplies">
   <div class="section-title">📦 備品・発注管理</div>
+  <div id="supply-lock-banner"></div>
   <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
     <button class="btn btn-gold" onclick="openModal('supply-modal')">＋ 追加</button>
   </div>
@@ -638,6 +666,7 @@
 <!-- ④ 予算管理 -->
 <div class="tab-content" id="tab-budget">
   <div class="section-title">💴 予算管理</div>
+  <div id="budget-lock-banner"></div>
   <div class="budget-summary" id="budget-summary"></div>
   <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
     <button class="btn btn-gold" onclick="openModal('budget-modal')">＋ 費目追加</button>
@@ -888,6 +917,16 @@
       <button class="btn btn-danger btn-sm" onclick="resetData()">🗑️ データリセット</button>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+  </div>
+  <div class="card">
+    <div class="card-title">🔐 社員PIN（予算・備品の金額ロック）</div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">予算・備品タブの金額は社員PIN（4桁）を入力した人だけが閲覧できます。外部メンバー（板尾先生・柳様など）には金額が表示されません。</p>
+    <div class="form-group">
+      <label class="form-label">社員PIN（4桁の数字）</label>
+      <input type="password" class="form-input" id="setting-pin" placeholder="初期値: 1234" maxlength="8" style="width:160px;" />
+    </div>
+    <button class="btn btn-primary" onclick="savePin()">PINを変更</button>
+    <div id="pin-result" style="margin-top:8px;font-size:13px;"></div>
   </div>
   <div class="card">
     <div class="card-title">🔒 アクセス制限について</div>
@@ -1339,31 +1378,28 @@ function renderTasks(filter) {
   container.innerHTML = filtered.map(t => {
     const locked = t.dep && !doneIds.has(t.dep);
     const depTask = t.dep ? tasks.find(x => x.id === t.dep) : null;
-    const statusBadge = statusHtml(t.status);
-    const assigneeHtml = `<span class="task-assignee">👤 ${t.main || '未定'}</span>${t.sub ? `<span class="task-assignee">👤 ${t.sub}</span>` : ''}`;
     const depHtml = locked && depTask ? `<span class="task-dep">🔒 「${depTask.title}」完了後</span>` : '';
-    const dueHtml = t.due ? `<span class="task-due">📅 ${t.due}</span>` : '';
+    const dueFmt = t.due ? t.due.replace(/^(\d{4})-(\d{2})-(\d{2})$/, (_, y,m,d) => `${parseInt(m)}/${parseInt(d)}`) : '日付未定';
+    const statusCycle = locked ? '' : `onclick="cycleStatus('${t.id}')" title="クリックでステータス変更"`;
     return `<div class="task-card${locked?' locked':''}">
-      <div>
-        <div class="task-title">${statusIcon(t.status)} ${t.title}</div>
-        ${t.note ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">${t.note}</div>` : ''}
+      <div style="flex:1;min-width:0;">
+        <div class="task-title" style="display:flex;align-items:baseline;gap:6px;">
+          <span>${statusIcon(t.status)}</span>
+          <span class="editable-click" onclick="inlineEditText(this,'${t.id}','title')" title="クリックで編集">${t.title}</span>
+        </div>
+        ${t.note ? `<div style="font-size:12px;color:var(--text-muted);margin:2px 0 4px;">${t.note}</div>` : ''}
         <div class="task-meta">
-          ${assigneeHtml}
+          <span class="task-assignee" title="クリックで担当変更">👤 <span class="editable-click" onclick="inlineEditText(this,'${t.id}','main')">${t.main || '未定'}</span></span>
+          ${t.sub ? `<span class="task-assignee">👤 <span class="editable-click" onclick="inlineEditText(this,'${t.id}','sub')">${t.sub}</span></span>` : ''}
           <span class="task-cat">${t.cat}</span>
           ${depHtml}
-          ${dueHtml}
-          ${statusBadge}
+          <span class="task-due" title="クリックで日付変更">📅 <span class="editable-click" onclick="inlineEditDate(this,'${t.id}','due')">${dueFmt}</span></span>
         </div>
       </div>
       <div class="task-actions">
-        <select class="status-sel" onchange="changeTaskStatus('${t.id}', this.value)" ${locked?'disabled':''}>
-          <option value="todo" ${t.status==='todo'?'selected':''}>未着手</option>
-          <option value="doing" ${t.status==='doing'?'selected':''}>進行中</option>
-          <option value="done" ${t.status==='done'?'selected':''}>完了</option>
-          <option value="hold" ${t.status==='hold'?'selected':''}>保留</option>
-        </select>
-        <button class="btn btn-sm" style="background:#f1f5f9;" onclick="editTask('${t.id}')">編集</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteTask('${t.id}')">削除</button>
+        <span class="badge badge-${t.status}" style="${locked?'':'cursor:pointer;'}" ${statusCycle}>${statusLabel(t.status)}</span>
+        <button class="btn btn-sm" style="background:#f1f5f9;padding:4px 8px;" onclick="editTask('${t.id}')" title="詳細編集（メモ・依存関係）">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteTask('${t.id}')">✕</button>
       </div>
     </div>`;
   }).join('');
@@ -1374,16 +1410,112 @@ function statusHtml(s) {
   return map[s] || '';
 }
 function statusIcon(s) { return { todo:'⬜', doing:'🔵', done:'✅', hold:'⏸️' }[s] || '⬜'; }
+function statusLabel(s) { return { todo:'未着手', doing:'進行中', done:'完了', hold:'保留' }[s] || s; }
 
 function changeTaskStatus(id, status) {
   const t = data.tasks.find(x => x.id === id);
   if (t) { t.status = status; saveLocal(); syncToCloud(); renderAll(); }
 }
 
+// ===== INLINE EDIT =====
+function inlineEditText(el, taskId, field) {
+  const task = data.tasks.find(t => t.id === taskId);
+  if (!task) return;
+  const old = task[field] || '';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = old;
+  input.className = 'inline-input';
+  input.style.width = Math.max(120, old.length * 10) + 'px';
+  el.replaceWith(input);
+  input.focus(); input.select();
+  const save = () => { task[field] = input.value.trim() || old; saveLocal(); syncToCloud(); renderTasks(currentTaskFilter); };
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') input.blur();
+    if (e.key === 'Escape') { task[field] = old; renderTasks(currentTaskFilter); }
+  });
+}
+
+function inlineEditDate(el, taskId, field) {
+  const task = data.tasks.find(t => t.id === taskId);
+  if (!task) return;
+  const input = document.createElement('input');
+  input.type = 'date';
+  input.value = task[field] || '';
+  input.className = 'inline-input';
+  el.replaceWith(input);
+  input.focus();
+  input.addEventListener('change', () => { task[field] = input.value; saveLocal(); syncToCloud(); renderTasks(currentTaskFilter); });
+  input.addEventListener('blur', () => renderTasks(currentTaskFilter));
+}
+
+function cycleStatus(taskId) {
+  const t = data.tasks.find(x => x.id === taskId);
+  if (!t) return;
+  const cycle = ['todo', 'doing', 'done', 'hold'];
+  t.status = cycle[(cycle.indexOf(t.status) + 1) % cycle.length];
+  saveLocal(); syncToCloud(); renderAll();
+}
+
+// ===== PIN LOCK =====
+let budgetUnlocked = sessionStorage.getItem('budget_unlocked') === '1';
+
+function getBudgetPin() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY + '_settings') || '{}');
+    return s.budget_pin || '1234';
+  } catch(e) { return '1234'; }
+}
+
+function tryUnlockBudget() {
+  if (budgetUnlocked) return;
+  const pin = prompt('社員PIN（4桁）を入力してください\n（金額を表示するにはLIFEFUND社員PINが必要です）');
+  if (pin === null) return;
+  if (pin === getBudgetPin()) {
+    budgetUnlocked = true;
+    sessionStorage.setItem('budget_unlocked', '1');
+    renderBudget(); renderSupplies(currentSupplyFilter || 'all');
+  } else {
+    alert('PINが違います');
+  }
+}
+
+function lockBudget() {
+  budgetUnlocked = false;
+  sessionStorage.removeItem('budget_unlocked');
+  renderBudget(); renderSupplies(currentSupplyFilter || 'all');
+}
+
+function savePin() {
+  const pin = document.getElementById('setting-pin').value.trim();
+  if (!pin) { document.getElementById('pin-result').innerHTML = '<span style="color:red;">PINを入力してください</span>'; return; }
+  if (!/^\d{4,8}$/.test(pin)) { document.getElementById('pin-result').innerHTML = '<span style="color:red;">4〜8桁の数字で入力してください</span>'; return; }
+  const s = JSON.parse(localStorage.getItem(STORAGE_KEY + '_settings') || '{}');
+  s.budget_pin = pin;
+  localStorage.setItem(STORAGE_KEY + '_settings', JSON.stringify(s));
+  document.getElementById('pin-result').innerHTML = '<span style="color:var(--success);">✓ PINを変更しました</span>';
+  document.getElementById('setting-pin').value = '';
+}
+
+function amountHtml(val, onClick) {
+  if (budgetUnlocked) return val ? '¥' + Number(val).toLocaleString() : '—';
+  return `<span class="amount-locked" onclick="${onClick}">🔒 ****</span>`;
+}
+
+let currentSupplyFilter = 'all';
 function renderSupplies(filter) {
+  currentSupplyFilter = filter || 'all';
   const tbody = document.getElementById('supply-tbody');
+  // lock banner
+  const bannerEl = document.getElementById('supply-lock-banner');
+  if (bannerEl) {
+    bannerEl.innerHTML = budgetUnlocked
+      ? `<div class="lock-banner"><span class="lock-banner-text">🔓 社員モード（金額表示中）</span><button class="btn btn-sm" style="background:#f1f5f9;" onclick="lockBudget()">ロックする</button></div>`
+      : `<div class="lock-banner"><span class="lock-banner-text">🔒 金額は社員PINでのみ表示されます</span><button class="btn btn-gold btn-sm" onclick="tryUnlockBudget()">PINで解除</button></div>`;
+  }
   const items = data.supplies || [];
-  const filtered = filter === 'all' ? items : items.filter(s => s.cat === filter);
+  const filtered = currentSupplyFilter === 'all' ? items : items.filter(s => s.cat === currentSupplyFilter);
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted);">備品データがありません。「追加」ボタンから登録してください。</td></tr>';
     return;
@@ -1396,23 +1528,32 @@ function renderSupplies(filter) {
     <td>${s.person || '—'}</td>
     <td><span style="background:${statusColor[s.status]||'#f1f5f9'};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;">${s.status}</span></td>
     <td>${s.due || '—'}</td>
-    <td class="amount">${s.price ? '¥' + Number(s.price).toLocaleString() : '—'}</td>
+    <td class="amount">${amountHtml(s.price, 'tryUnlockBudget()')}</td>
     <td style="display:flex;gap:4px;">
-      <button class="btn btn-sm" style="background:#f1f5f9;" onclick="editSupply('${s.id}')">編集</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteSupply('${s.id}')">削除</button>
+      <button class="btn btn-sm" style="background:#f1f5f9;" onclick="editSupply('${s.id}')">✏️</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteSupply('${s.id}')">✕</button>
     </td>
   </tr>`).join('');
 }
 
 function renderBudget() {
   const items = data.budget || [];
+  // lock banner
+  const bannerEl = document.getElementById('budget-lock-banner');
+  if (bannerEl) {
+    bannerEl.innerHTML = budgetUnlocked
+      ? `<div class="lock-banner"><span class="lock-banner-text">🔓 社員モード（金額表示中）</span><button class="btn btn-sm" style="background:#f1f5f9;" onclick="lockBudget()">ロックする</button></div>`
+      : `<div class="lock-banner"><span class="lock-banner-text">🔒 金額は社員PINでのみ表示されます</span><button class="btn btn-gold btn-sm" onclick="tryUnlockBudget()">PINで解除</button></div>`;
+  }
   const totalEst = items.reduce((s, b) => s + (Number(b.est) || 0), 0);
   const totalOrder = items.reduce((s, b) => s + (Number(b.order) || 0), 0);
   const totalPaid = items.reduce((s, b) => s + (Number(b.paid) || 0), 0);
+  const A = v => amountHtml(v, 'tryUnlockBudget()');
+  const sumVal = v => budgetUnlocked ? '¥' + v.toLocaleString() : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`;
   document.getElementById('budget-summary').innerHTML = `
-    <div class="budget-stat"><div class="budget-stat-label">見積合計</div><div class="budget-stat-value">¥${totalEst.toLocaleString()}</div><div class="budget-stat-sub">税込</div></div>
-    <div class="budget-stat"><div class="budget-stat-label">発注合計</div><div class="budget-stat-value">¥${totalOrder.toLocaleString()}</div><div class="budget-stat-sub">税込</div></div>
-    <div class="budget-stat"><div class="budget-stat-label">支払済</div><div class="budget-stat-value">¥${totalPaid.toLocaleString()}</div><div class="budget-stat-sub">税込</div></div>
+    <div class="budget-stat"><div class="budget-stat-label">見積合計</div><div class="budget-stat-value">${sumVal(totalEst)}</div><div class="budget-stat-sub">税込</div></div>
+    <div class="budget-stat"><div class="budget-stat-label">発注合計</div><div class="budget-stat-value">${sumVal(totalOrder)}</div><div class="budget-stat-sub">税込</div></div>
+    <div class="budget-stat"><div class="budget-stat-label">支払済</div><div class="budget-stat-value">${sumVal(totalPaid)}</div><div class="budget-stat-sub">税込</div></div>
     <div class="budget-stat"><div class="budget-stat-label">費目数</div><div class="budget-stat-value">${items.length}</div><div class="budget-stat-sub">件</div></div>`;
 
   const ringiColor = { '未':'#fee2e2', '申請中':'#fef3c7', '承認':'#d1fae5' };
@@ -1420,14 +1561,14 @@ function renderBudget() {
     <td style="font-weight:600;">${b.name}</td>
     <td>${b.cat}</td>
     <td>${b.person || '—'}</td>
-    <td class="amount">${b.est ? '¥' + Number(b.est).toLocaleString() : '—'}</td>
+    <td class="amount">${A(b.est)}</td>
     <td><span style="background:${ringiColor[b.ringi]||'#f1f5f9'};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;">${b.ringi}</span></td>
-    <td class="amount">${b.order ? '¥' + Number(b.order).toLocaleString() : '—'}</td>
-    <td class="amount">${b.paid ? '¥' + Number(b.paid).toLocaleString() : '—'}</td>
+    <td class="amount">${A(b.order)}</td>
+    <td class="amount">${A(b.paid)}</td>
     <td style="font-size:12px;color:var(--text-muted);">${b.memo || ''}</td>
     <td style="display:flex;gap:4px;">
-      <button class="btn btn-sm" style="background:#f1f5f9;" onclick="editBudget('${b.id}')">編集</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteBudget('${b.id}')">削除</button>
+      <button class="btn btn-sm" style="background:#f1f5f9;" onclick="editBudget('${b.id}')">✏️</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteBudget('${b.id}')">✕</button>
     </td>
   </tr>`).join('') :
   '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted);">費目データがありません</td></tr>';
