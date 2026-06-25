@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>志都呂モデルハウス 民泊化プロジェクト</title>
+<style>
+  :root {
+    --navy: #1a2744;
+    --navy-dark: #111b33;
+    --navy-mid: #243358;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-pale: #f5e9c8;
+    --white: #ffffff;
+    --bg: #f0f2f7;
+    --card: #ffffff;
+    --text: #1a2744;
+    --text-muted: #6b7280;
+    --border: #e2e8f0;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --shadow: 0 2px 12px rgba(26,39,68,0.10);
+    --shadow-lg: 0 8px 32px rgba(26,39,68,0.15);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ===== HEADER ===== */
+  header {
+    background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 60%, var(--navy-mid) 100%);
+    color: var(--white);
+    padding: 0;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .header-top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px 10px;
+    border-bottom: 1px solid rgba(201,168,76,0.3);
+  }
+  .header-title { display: flex; align-items: center; gap: 12px; }
+  .header-icon { font-size: 28px; }
+  .header-text h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.05em; }
+  .header-text p { font-size: 11px; color: var(--gold-light); margin-top: 2px; }
+  .header-meta { text-align: right; }
+  .goal-badge {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--navy-dark);
+    padding: 4px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.05em;
+  }
+  .header-date { font-size: 11px; color: var(--gold-light); margin-top: 4px; }
+
+  /* ===== NAV TABS ===== */
+  nav {
+    display: flex; overflow-x: auto; gap: 0;
+    padding: 0 16px;
+    background: var(--navy-dark);
+    scrollbar-width: none;
+  }
+  nav::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    padding: 10px 16px;
+    font-size: 13px; font-weight: 600;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer; white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s; letter-spacing: 0.03em;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .nav-tab:hover { color: var(--gold-light); }
+  .nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* ===== MAIN ===== */
+  main { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .section-title {
+    font-size: 20px; font-weight: 700; color: var(--navy);
+    margin-bottom: 20px; padding-bottom: 10px;
+    border-bottom: 3px solid var(--gold);
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 20px; margin-bottom: 16px;
+  }
+  .card-title { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    padding: 8px 18px; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary { background: var(--navy); color: white; }
+  .btn-primary:hover { background: var(--navy-mid); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .btn-gold { background: var(--gold); color: var(--navy-dark); }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-success { background: var(--success); color: white; }
+
+  /* ===== BADGES ===== */
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700;
+  }
+  .badge-todo { background: #f1f5f9; color: #64748b; }
+  .badge-doing { background: #dbeafe; color: #1d4ed8; }
+  .badge-done { background: #d1fae5; color: #065f46; }
+  .badge-hold { background: #fef3c7; color: #92400e; }
+  .badge-lock { background: #fee2e2; color: #991b1b; }
+
+  /* ===== PHASE TIMELINE ===== */
+  .timeline { position: relative; padding: 10px 0; }
+  .timeline-header {
+    display: grid; grid-template-columns: 200px 1fr 120px;
+    gap: 12px; padding: 8px 16px;
+    background: var(--navy); color: white;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    font-size: 12px; font-weight: 600;
+  }
+  .phase-row {
+    display: grid; grid-template-columns: 200px 1fr 120px;
+    gap: 12px; padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+    transition: background 0.2s;
+  }
+  .phase-row:hover { background: #f8fafc; }
+  .phase-row:last-child { border-bottom: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); }
+  .phase-name { font-weight: 700; font-size: 13px; color: var(--navy); }
+  .phase-period { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .phase-bar-wrap { position: relative; height: 20px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
+  .phase-bar { height: 100%; border-radius: 10px; transition: width 0.6s ease; position: relative; }
+  .phase-bar::after {
+    content: attr(data-pct) '%';
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    font-size: 10px; font-weight: 700; color: white;
+  }
+  .phase-items { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+  .phase-status { text-align: center; }
+  .milestone {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px; background: linear-gradient(135deg, var(--gold-pale), #fff);
+    border-left: 4px solid var(--gold); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    margin: 8px 0; font-size: 13px;
+  }
+  .milestone-icon { font-size: 18px; }
+  .milestone-date { font-weight: 700; color: var(--gold); min-width: 60px; }
+  .milestone-text { font-weight: 600; color: var(--navy); }
+
+  /* ===== TASKS ===== */
+  .task-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .filter-btn {
+    padding: 5px 14px; border-radius: 20px; border: 1.5px solid var(--border);
+    font-size: 12px; font-weight: 600; cursor: pointer; background: white;
+    transition: all 0.2s; color: var(--text-muted);
+  }
+  .filter-btn.active { background: var(--navy); color: white; border-color: var(--navy); }
+  .task-card {
+    background: white; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border); padding: 14px 16px;
+    margin-bottom: 10px; transition: all 0.2s;
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 12px; align-items: start;
+  }
+  .task-card:hover { border-color: var(--navy); box-shadow: var(--shadow); }
+  .task-card.locked { opacity: 0.65; background: #fafafa; }
+  .task-title { font-weight: 700; font-size: 14px; color: var(--navy); margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+  .task-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
+  .task-assignee {
+    display: flex; align-items: center; gap: 4px;
+    background: #f0f4ff; padding: 2px 8px; border-radius: 20px;
+    font-size: 11px; color: var(--navy); font-weight: 600;
+  }
+  .task-cat { font-size: 11px; color: var(--text-muted); background: #f1f5f9; padding: 2px 8px; border-radius: 20px; }
+  .task-dep { font-size: 11px; color: #ef4444; background: #fee2e2; padding: 2px 8px; border-radius: 20px; }
+  .task-actions { display: flex; gap: 6px; align-items: flex-start; }
+  .status-sel {
+    padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 6px;
+    font-size: 12px; font-weight: 600; cursor: pointer; background: white;
+  }
+  .task-due { font-size: 11px; color: var(--text-muted); }
+
+  /* ===== SUPPLIES ===== */
+  .supplies-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .supplies-table th { background: var(--navy); color: white; padding: 10px 12px; text-align: left; font-size: 12px; }
+  .supplies-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .supplies-table tr:hover td { background: #f8fafc; }
+  .supplies-table tr:last-child td { border-bottom: none; }
+
+  /* ===== BUDGET ===== */
+  .budget-summary {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px; margin-bottom: 20px;
+  }
+  .budget-stat {
+    background: white; border-radius: var(--radius-sm); padding: 16px;
+    border: 1.5px solid var(--border); text-align: center;
+  }
+  .budget-stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+  .budget-stat-value { font-size: 22px; font-weight: 700; color: var(--navy); }
+  .budget-stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .budget-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .budget-table th { background: var(--navy); color: white; padding: 10px 12px; text-align: left; font-size: 12px; }
+  .budget-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .budget-table tr:hover td { background: #f8fafc; }
+  .amount { text-align: right; font-weight: 600; font-family: monospace; }
+
+  /* ===== MEMBERS ===== */
+  .members-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+  .member-card {
+    background: white; border-radius: var(--radius); padding: 20px;
+    border: 1.5px solid var(--border); text-align: center;
+    transition: all 0.2s; position: relative;
+  }
+  .member-card:hover { border-color: var(--gold); box-shadow: var(--shadow); transform: translateY(-2px); }
+  .member-card.commander { border-color: var(--gold); background: linear-gradient(135deg, #fffbf0, white); }
+  .commander-badge {
+    position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--navy-dark); font-size: 10px; font-weight: 700;
+    padding: 2px 12px; border-radius: 20px; white-space: nowrap;
+  }
+  .member-avatar {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+    color: white; font-size: 20px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 12px; letter-spacing: 0.05em;
+  }
+  .member-card.commander .member-avatar { background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: var(--navy-dark); }
+  .member-name { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+  .member-role { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+  .member-org { font-size: 11px; background: #f1f5f9; color: var(--navy); padding: 2px 10px; border-radius: 20px; display: inline-block; }
+  .member-org.external { background: #f0fdf4; color: #166534; }
+
+  /* ===== PROPERTY ===== */
+  .property-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .property-grid { grid-template-columns: 1fr; } }
+  .property-item { padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; gap: 12px; }
+  .property-label { font-size: 12px; color: var(--text-muted); min-width: 100px; }
+  .property-value { font-size: 13px; font-weight: 600; color: var(--navy); }
+
+  /* ===== DOCUMENTS ===== */
+  .docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .doc-card {
+    background: white; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    padding: 16px; display: flex; flex-direction: column; align-items: center;
+    text-align: center; gap: 10px; transition: all 0.2s; cursor: pointer;
+  }
+  .doc-card:hover { border-color: var(--navy); box-shadow: var(--shadow); transform: translateY(-2px); }
+  .doc-icon { font-size: 36px; }
+  .doc-name { font-size: 12px; font-weight: 600; color: var(--navy); line-height: 1.4; }
+  .doc-tag { font-size: 10px; background: #f1f5f9; color: var(--text-muted); padding: 2px 8px; border-radius: 20px; }
+
+  /* ===== LINKS ===== */
+  .links-section { margin-bottom: 24px; }
+  .links-section-title { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+  .link-card {
+    background: white; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+    text-decoration: none; color: inherit; transition: all 0.2s;
+  }
+  .link-card:hover { border-color: var(--navy); box-shadow: var(--shadow); transform: translateY(-1px); }
+  .link-icon { font-size: 24px; flex-shrink: 0; }
+  .link-info { flex: 1; min-width: 0; }
+  .link-name { font-size: 13px; font-weight: 700; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .link-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .link-arrow { color: var(--text-muted); font-size: 14px; flex-shrink: 0; }
+
+  /* ===== MODAL ===== */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 200;
+    align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white; border-radius: var(--radius); padding: 28px;
+    width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal-title { font-size: 17px; font-weight: 700; color: var(--navy); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; display: block; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 9px 12px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 13px; font-family: inherit;
+    transition: border 0.2s; outline: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--navy); }
+  .form-textarea { resize: vertical; min-height: 70px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  /* ===== MISC ===== */
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+  .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state-text { font-size: 14px; }
+  .sync-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px; background: #f0fdf4; border-radius: var(--radius-sm);
+    font-size: 12px; color: #166534; margin-bottom: 16px;
+  }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .setup-banner {
+    background: linear-gradient(135deg, var(--gold-pale), #fff);
+    border: 1.5px solid var(--gold); border-radius: var(--radius);
+    padding: 16px 20px; margin-bottom: 20px; font-size: 13px;
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .setup-banner-icon { font-size: 20px; flex-shrink: 0; }
+
+  @media (max-width: 768px) {
+    .timeline-header, .phase-row { grid-template-columns: 1fr; }
+    .timeline-header { display: none; }
+    .form-row { grid-template-columns: 1fr; }
+    .header-text h1 { font-size: 15px; }
+    main { padding: 16px 12px; }
+  }
+  .progress-ring { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+  .overall-progress {
+    background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+    color: white; border-radius: var(--radius); padding: 20px;
+    margin-bottom: 20px; display: flex; align-items: center; gap: 20px;
+  }
+  .progress-circle { width: 70px; height: 70px; position: relative; flex-shrink: 0; }
+  .progress-circle svg { transform: rotate(-90deg); }
+  .progress-circle-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; }
+  .overall-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .overall-info p { font-size: 12px; opacity: 0.8; }
+  .stats-row { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+  .stat-item { text-align: center; }
+  .stat-num { font-size: 20px; font-weight: 700; }
+  .stat-label { font-size: 10px; opacity: 0.7; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-top">
+    <div class="header-title">
+      <div class="header-icon">🏡</div>
+      <div class="header-text">
+        <h1>志都呂モデルハウス　民泊化プロジェクト</h1>
+        <p>株式会社LIFEFUND　プロジェクト管理ページ</p>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="goal-badge">🎯 10/1 開業</div>
+      <div class="header-date" id="today-date"></div>
+    </div>
+  </div>
+  <nav id="main-nav">
+    <div class="nav-tab active" data-tab="schedule">📅 工程表</div>
+    <div class="nav-tab" data-tab="tasks">✅ タスク</div>
+    <div class="nav-tab" data-tab="supplies">📦 備品・発注</div>
+    <div class="nav-tab" data-tab="budget">💴 予算管理</div>
+    <div class="nav-tab" data-tab="members">👥 メンバー</div>
+    <div class="nav-tab" data-tab="property">🏠 物件情報</div>
+    <div class="nav-tab" data-tab="documents">📋 図面・資料</div>
+    <div class="nav-tab" data-tab="links">🔗 リンク集</div>
+    <div class="nav-tab" data-tab="settings">⚙️ 設定</div>
+  </nav>
+</header>
+
+<main>
+
+<!-- ① 工程表 -->
+<div class="tab-content active" id="tab-schedule">
+  <div class="section-title">📅 工程表</div>
+
+  <div class="overall-progress" id="overall-progress-bar">
+    <div class="progress-circle">
+      <svg width="70" height="70" viewBox="0 0 70 70">
+        <circle cx="35" cy="35" r="28" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="7"/>
+        <circle cx="35" cy="35" r="28" fill="none" stroke="#c9a84c" stroke-width="7"
+          stroke-dasharray="175.9" stroke-dashoffset="175.9" id="progress-circle-arc"
+          stroke-linecap="round"/>
+      </svg>
+      <div class="progress-circle-text" id="overall-pct">0%</div>
+    </div>
+    <div class="overall-info">
+      <h3>プロジェクト全体進捗</h3>
+      <p>開業目標：2026年10月1日</p>
+      <div class="stats-row" id="task-stats">
+        <div class="stat-item"><div class="stat-num" id="stat-done">0</div><div class="stat-label">完了</div></div>
+        <div class="stat-item"><div class="stat-num" id="stat-doing">0</div><div class="stat-label">進行中</div></div>
+        <div class="stat-item"><div class="stat-num" id="stat-todo">0</div><div class="stat-label">未着手</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- マイルストーン -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title">🚩 マイルストーン</div>
+    <div class="milestone"><span class="milestone-icon">📄</span><span class="milestone-date">6/26</span><span class="milestone-text">消防設備見積受領</span></div>
+    <div class="milestone"><span class="milestone-icon">📝</span><span class="milestone-date">6末</span><span class="milestone-text">表題登記・保存登記完了</span></div>
+    <div class="milestone"><span class="milestone-icon">🔨</span><span class="milestone-date">7月中</span><span class="milestone-text">消防設備・エアコン・電子錠工事着工</span></div>
+    <div class="milestone"><span class="milestone-icon">🚒</span><span class="milestone-date">7末</span><span class="milestone-text">消防検査立合・工事完了・マットレス搬入</span></div>
+    <div class="milestone"><span class="milestone-icon">📜</span><span class="milestone-date">8初旬</span><span class="milestone-text">消防法令適合通知書　交付</span></div>
+    <div class="milestone"><span class="milestone-icon">🏛️</span><span class="milestone-date">8中旬</span><span class="milestone-text">民泊開業届　提出（板尾先生）</span></div>
+    <div class="milestone"><span class="milestone-icon">📸</span><span class="milestone-date">8末</span><span class="milestone-text">写真撮影・清掃ブリーフィング</span></div>
+    <div class="milestone"><span class="milestone-icon">✅</span><span class="milestone-date">9/15</span><span class="milestone-text">開業届　受理</span></div>
+    <div class="milestone"><span class="milestone-icon">🛏️</span><span class="milestone-date">9/16</span><span class="milestone-text">試泊（社内）</span></div>
+    <div class="milestone"><span class="milestone-icon">🎉</span><span class="milestone-date">10/1</span><span class="milestone-text"><strong>正式開業！</strong></span></div>
+  </div>
+
+  <!-- フェーズ進捗 -->
+  <div class="card">
+    <div class="card-title">📊 フェーズ進捗</div>
+    <div class="timeline">
+      <div class="timeline-header">
+        <div>フェーズ</div>
+        <div>進捗</div>
+        <div>ステータス</div>
+      </div>
+      <div id="phase-rows"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ② タスク -->
+<div class="tab-content" id="tab-tasks">
+  <div class="section-title">✅ タスク管理</div>
+  <div class="sync-bar"><div class="sync-dot"></div><span id="sync-status">データ読み込み中...</span></div>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+    <div class="task-filters" id="task-filters">
+      <button class="filter-btn active" data-filter="all">すべて</button>
+      <button class="filter-btn" data-filter="消防">🔥 消防</button>
+      <button class="filter-btn" data-filter="登記">📋 登記</button>
+      <button class="filter-btn" data-filter="内装">🛋 内装</button>
+      <button class="filter-btn" data-filter="設備">🔧 設備</button>
+      <button class="filter-btn" data-filter="行政">🏛 行政</button>
+      <button class="filter-btn" data-filter="運営">🏨 運営</button>
+    </div>
+    <button class="btn btn-gold" onclick="openModal('task-modal')">＋ タスク追加</button>
+  </div>
+  <div id="task-list"></div>
+</div>
+
+<!-- ③ 備品・発注 -->
+<div class="tab-content" id="tab-supplies">
+  <div class="section-title">📦 備品・発注管理</div>
+  <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+    <button class="btn btn-gold" onclick="openModal('supply-modal')">＋ 追加</button>
+  </div>
+  <div class="card">
+    <div class="task-filters" id="supply-filters" style="margin-bottom:12px;">
+      <button class="filter-btn active" data-filter="all">すべて</button>
+      <button class="filter-btn" data-filter="家具">🛋 家具</button>
+      <button class="filter-btn" data-filter="家電">📺 家電</button>
+      <button class="filter-btn" data-filter="寝具">🛏 寝具</button>
+      <button class="filter-btn" data-filter="アメニティ">🧴 アメニティ</button>
+      <button class="filter-btn" data-filter="設備">🔧 設備</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="supplies-table">
+        <thead>
+          <tr>
+            <th>品名</th><th>カテゴリ</th><th>数量</th><th>担当</th>
+            <th>ステータス</th><th>納期目安</th><th>金額（税込）</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="supply-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ④ 予算管理 -->
+<div class="tab-content" id="tab-budget">
+  <div class="section-title">💴 予算管理</div>
+  <div class="budget-summary" id="budget-summary"></div>
+  <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+    <button class="btn btn-gold" onclick="openModal('budget-modal')">＋ 費目追加</button>
+  </div>
+  <div class="card">
+    <div style="overflow-x:auto;">
+      <table class="budget-table">
+        <thead>
+          <tr>
+            <th>費目</th><th>カテゴリ</th><th>担当</th>
+            <th>見積金額</th><th>稟議</th><th>発注金額</th><th>支払済</th><th>メモ</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="budget-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ⑤ メンバー -->
+<div class="tab-content" id="tab-members">
+  <div class="section-title">👥 プロジェクトメンバー</div>
+  <div class="members-grid" id="members-grid"></div>
+</div>
+
+<!-- ⑥ 物件情報 -->
+<div class="tab-content" id="tab-property">
+  <div class="section-title">🏠 物件情報</div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+    <div class="card">
+      <div class="card-title">📍 基本情報</div>
+      <div class="property-item"><span class="property-label">物件名</span><span class="property-value">志都呂モデルハウス</span></div>
+      <div class="property-item"><span class="property-label">所在地</span><span class="property-value">浜松市中央区志都呂</span></div>
+      <div class="property-item"><span class="property-label">形態</span><span class="property-value">戸建て（2階建て）</span></div>
+      <div class="property-item"><span class="property-label">民泊種別</span><span class="property-value">家主不在型</span></div>
+      <div class="property-item"><span class="property-label">管理業者</span><span class="property-value">インバウンドホールディングス</span></div>
+      <div class="property-item"><span class="property-label">行政書士</span><span class="property-value">板尾朋哉 先生</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📐 建物スペック</div>
+      <div class="property-item"><span class="property-label">認定</span><span class="property-value">長期優良住宅</span></div>
+      <div class="property-item"><span class="property-label">確認済証</span><span class="property-value">取得済</span></div>
+      <div class="property-item"><span class="property-label">検査済証</span><span class="property-value">取得済</span></div>
+      <div class="property-item"><span class="property-label">消防設備</span><span class="property-value">特定小規模施設用自動火災報知設備（設置予定）</span></div>
+      <div class="property-item"><span class="property-label">着工届</span><span class="property-value">不要（消防本部予防課確認済）</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🗓️ 登記状況</div>
+      <div class="property-item"><span class="property-label">表題登記</span><span class="property-value">完了間近（大谷先生）</span></div>
+      <div class="property-item"><span class="property-label">保存登記</span><span class="property-value">手続き中（村松司法書士事務所）</span></div>
+      <div class="property-item"><span class="property-label">保存登記完了予定</span><span class="property-value">7/2 目途</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔥 消防手続き</div>
+      <div class="property-item"><span class="property-label">設備業者</span><span class="property-value">正昴電工 柳智宣 様</span></div>
+      <div class="property-item"><span class="property-label">消防本部対応</span><span class="property-value">柳様（消防本部予防課）</span></div>
+      <div class="property-item"><span class="property-label">適合申請</span><span class="property-value">中山亘 先生（西消防署）</span></div>
+      <div class="property-item"><span class="property-label">見積</span><span class="property-value">6/26 受領予定</span></div>
+      <div class="property-item"><span class="property-label">工事完了目標</span><span class="property-value">7月末</span></div>
+      <div class="property-item"><span class="property-label">適合通知書交付</span><span class="property-value">8月初旬見込み</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑦ 図面・資料 -->
+<div class="tab-content" id="tab-documents">
+  <div class="section-title">📋 図面・資料</div>
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title">🔥 消防設備</div>
+    <div class="docs-grid">
+      <div class="doc-card">
+        <div class="doc-icon">📐</div>
+        <div class="doc-name">平面・立面 消防用設備</div>
+        <div class="doc-tag">JWCAD / 柳様作成</div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title">📐 設計図書</div>
+    <div class="docs-grid">
+      <div class="doc-card"><div class="doc-icon">🗺️</div><div class="doc-name">配置図<br><small style="color:#999">ゴミ集積所候補位置あり</small></div><div class="doc-tag">PDF</div></div>
+      <div class="doc-card"><div class="doc-icon">📏</div><div class="doc-name">1階平面図</div><div class="doc-tag">PDF</div></div>
+      <div class="doc-card"><div class="doc-icon">📏</div><div class="doc-name">2階平面図</div><div class="doc-tag">PDF</div></div>
+      <div class="doc-card"><div class="doc-icon">🏗️</div><div class="doc-name">立面図</div><div class="doc-tag">PDF</div></div>
+      <div class="doc-card"><div class="doc-icon">🪟</div><div class="doc-name">造作展開図①</div><div class="doc-tag">PDF</div></div>
+      <div class="doc-card"><div class="doc-icon">🪟</div><div class="doc-name">造作展開図②</div><div class="doc-tag">PDF</div></div>
+      <div class="doc-card"><div class="doc-icon">🎨</div><div class="doc-name">マテリアル</div><div class="doc-tag">PDF</div></div>
+      <div class="doc-card"><div class="doc-icon">📋</div><div class="doc-name">仕上げ表①</div><div class="doc-tag">PDF</div></div>
+      <div class="doc-card"><div class="doc-icon">📋</div><div class="doc-name">仕上げ表②</div><div class="doc-tag">PDF</div></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title">🏛️ 行政・認定書類</div>
+    <div class="docs-grid">
+      <div class="doc-card"><div class="doc-icon">✅</div><div class="doc-name">確認済証</div><div class="doc-tag">PDF</div></div>
+      <div class="doc-card"><div class="doc-icon">✅</div><div class="doc-name">検査済証</div><div class="doc-tag">PDF</div></div>
+      <div class="doc-card"><div class="doc-icon">🏅</div><div class="doc-name">長期優良住宅認定通知書</div><div class="doc-tag">PDF</div></div>
+      <div class="doc-card"><div class="doc-icon">📄</div><div class="doc-name">適合証・評価書</div><div class="doc-tag">PDF</div></div>
+      <div class="doc-card"><div class="doc-icon">📄</div><div class="doc-name">長期優良申請書</div><div class="doc-tag">PDF / 95p</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">🛋️ インテリア</div>
+    <div class="docs-grid">
+      <div class="doc-card" style="border-style:dashed;opacity:0.6;">
+        <div class="doc-icon">🖼️</div>
+        <div class="doc-name">ICコーディネートプラン</div>
+        <div class="doc-tag">水野さん作成後追加</div>
+      </div>
+      <div class="doc-card" style="border-style:dashed;opacity:0.6;">
+        <div class="doc-icon">🗑️</div>
+        <div class="doc-name">ゴミ集積所候補図</div>
+        <div class="doc-tag">検討中</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑧ リンク集 -->
+<div class="tab-content" id="tab-links">
+  <div class="section-title">🔗 リンク集</div>
+
+  <div class="links-section">
+    <div class="links-section-title">🔨 工事・施工管理</div>
+    <div class="links-grid">
+      <a href="https://andpad.jp/my/orders/25093507" target="_blank" class="link-card">
+        <div class="link-icon">🏗️</div>
+        <div class="link-info"><div class="link-name">ANDPAD　民泊プロジェクト</div><div class="link-desc">今回の工事管理（案件ID: 25093507）</div></div>
+        <div class="link-arrow">→</div>
+      </a>
+      <a href="https://andpad.jp/my/orders/7015733" target="_blank" class="link-card">
+        <div class="link-icon">🏠</div>
+        <div class="link-info"><div class="link-name">ANDPAD　新築案件</div><div class="link-desc">新築当初の施工案件（案件ID: 7015733）</div></div>
+        <div class="link-arrow">→</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="links-section">
+    <div class="links-section-title">📸 現場・写真</div>
+    <div class="links-grid">
+      <a href="https://photos.app.goo.gl/7aaL3Hc9NPwcQjzGA" target="_blank" class="link-card">
+        <div class="link-icon">📷</div>
+        <div class="link-info"><div class="link-name">現場写真アルバム</div><div class="link-desc">Google Photos（施工前・現況写真）</div></div>
+        <div class="link-arrow">→</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="links-section">
+    <div class="links-section-title">💬 コミュニケーション</div>
+    <div class="links-grid">
+      <a href="https://www.chatwork.com/#!rid436943083" target="_blank" class="link-card">
+        <div class="link-icon">💬</div>
+        <div class="link-info"><div class="link-name">Chatwork プロジェクトルーム</div><div class="link-desc">ルーム ID: 436943083</div></div>
+        <div class="link-arrow">→</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="links-section">
+    <div class="links-section-title">🏛️ 行政・法令</div>
+    <div class="links-grid">
+      <a href="https://www.mlit.go.jp/kankocho/minpaku/" target="_blank" class="link-card">
+        <div class="link-icon">🏛️</div>
+        <div class="link-info"><div class="link-name">住宅宿泊事業法　観光庁</div><div class="link-desc">民泊制度ポータルサイト</div></div>
+        <div class="link-arrow">→</div>
+      </a>
+      <a href="https://www.mlit.go.jp/kankocho/minpaku/todo.html" target="_blank" class="link-card">
+        <div class="link-icon">📝</div>
+        <div class="link-info"><div class="link-name">民泊届出窓口（電子申請）</div><div class="link-desc">住宅宿泊事業　届出システム</div></div>
+        <div class="link-arrow">→</div>
+      </a>
+      <a href="https://www.city.hamamatsu.shizuoka.jp/seikatsu/sumaikankyo/minpaku.html" target="_blank" class="link-card">
+        <div class="link-icon">🏙️</div>
+        <div class="link-info"><div class="link-name">浜松市　民泊情報</div><div class="link-desc">浜松市住宅宿泊事業（民泊）の届出</div></div>
+        <div class="link-arrow">→</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="links-section">
+    <div class="links-section-title">🏨 OTA・運営</div>
+    <div class="links-grid">
+      <a href="https://www.airbnb.jp/hosting" target="_blank" class="link-card">
+        <div class="link-icon">🏡</div>
+        <div class="link-info"><div class="link-name">Airbnb ホスト管理</div><div class="link-desc">OTAサイト掲載管理</div></div>
+        <div class="link-arrow">→</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="links-section">
+    <div class="links-section-title">📂 その他</div>
+    <div class="links-grid">
+      <a href="https://morishitah-rgb.github.io/kh26-task-manager/" target="_blank" class="link-card">
+        <div class="link-icon">📊</div>
+        <div class="link-info"><div class="link-name">経営方針発表会　管理ページ</div><div class="link-desc">別プロジェクト（kh26）タスク管理</div></div>
+        <div class="link-arrow">→</div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ⑨ 設定 -->
+<div class="tab-content" id="tab-settings">
+  <div class="section-title">⚙️ 設定</div>
+  <div class="setup-banner">
+    <div class="setup-banner-icon">💡</div>
+    <div>
+      <strong>クラウド同期の設定</strong><br>
+      タスク・備品・予算データをチームで共有するには、jsonbin.ioのAPIキーとBIN IDを設定してください。<br>
+      <a href="https://jsonbin.io" target="_blank" style="color:var(--gold);">jsonbin.io でアカウント作成 →</a>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">🔑 クラウド同期設定</div>
+    <div class="form-group">
+      <label class="form-label">jsonbin.io API Key（X-Master-Key）</label>
+      <input type="text" class="form-input" id="setting-apikey" placeholder="$2a$10$..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label">BIN ID</label>
+      <input type="text" class="form-input" id="setting-binid" placeholder="64xxxxxxxxxxxxx" />
+    </div>
+    <div style="display:flex; gap:10px; margin-top:8px;">
+      <button class="btn btn-primary" onclick="saveSettings()">保存</button>
+      <button class="btn btn-gold" onclick="testConnection()">接続テスト</button>
+      <button class="btn" onclick="createNewBin()" style="background:#f1f5f9;color:var(--navy);">新しいBINを作成</button>
+    </div>
+    <div id="setting-result" style="margin-top:12px; font-size:13px;"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">💾 データ管理</div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="exportData()">📤 JSONエクスポート</button>
+      <button class="btn" onclick="importData()" style="background:#f1f5f9;color:var(--navy);">📥 JSONインポート</button>
+      <button class="btn btn-danger btn-sm" onclick="resetData()">🗑️ データリセット</button>
+    </div>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+  </div>
+  <div class="card">
+    <div class="card-title">🔒 アクセス制限について</div>
+    <p style="font-size:13px; line-height:1.8; color:var(--text-muted);">
+      現在このサイトは<strong>全員アクセス可能</strong>（認証なし）です。<br>
+      将来的にアクセスを制限する場合の選択肢：<br>
+      ・<strong>Netlifyパスワード保護</strong>（推奨）: netlify.tomlに設定を追加するだけ。パスワードをチームで共有。<br>
+      ・<strong>GitHubリポジトリをPrivateに変更</strong>: 高セキュリティだがGitHub有料プランが必要。<br>
+      ご希望の場合は森下さんにお伝えください。
+    </p>
+  </div>
+</div>
+
+</main>
+
+<!-- MODALS -->
+
+<!-- タスク追加モーダル -->
+<div class="modal-overlay" id="task-modal">
+  <div class="modal">
+    <div class="modal-title">✅ タスク追加・編集</div>
+    <input type="hidden" id="task-edit-id">
+    <div class="form-group">
+      <label class="form-label">タスク名 *</label>
+      <input type="text" class="form-input" id="task-title-input" placeholder="例：消防設備工事着工">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">カテゴリ</label>
+        <select class="form-select" id="task-cat-input">
+          <option value="消防">🔥 消防</option>
+          <option value="登記">📋 登記</option>
+          <option value="内装">🛋 内装</option>
+          <option value="設備">🔧 設備</option>
+          <option value="行政">🏛 行政</option>
+          <option value="運営">🏨 運営</option>
+          <option value="その他">その他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ステータス</label>
+        <select class="form-select" id="task-status-input">
+          <option value="todo">未着手</option>
+          <option value="doing">進行中</option>
+          <option value="done">完了</option>
+          <option value="hold">保留</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">主担当</label>
+        <select class="form-select" id="task-main-input">
+          <option value="">-- 選択 --</option>
+          <option>石野祐太朗</option>
+          <option>森下秀之</option>
+          <option>水野萌</option>
+          <option>宇田身江子</option>
+          <option>板尾朋哉</option>
+          <option>中山亘</option>
+          <option>柳智宣</option>
+          <option>真方伸彦</option>
+          <option>大谷直弘</option>
+          <option>インバウンドHD</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">サブ担当（任意）</label>
+        <select class="form-select" id="task-sub-input">
+          <option value="">-- なし --</option>
+          <option>石野祐太朗</option>
+          <option>森下秀之</option>
+          <option>水野萌</option>
+          <option>宇田身江子</option>
+          <option>板尾朋哉</option>
+          <option>中山亘</option>
+          <option>柳智宣</option>
+          <option>真方伸彦</option>
+          <option>大谷直弘</option>
+          <option>インバウンドHD</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">期限</label>
+        <input type="date" class="form-input" id="task-due-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">前提タスク（完了しないと着手不可）</label>
+        <select class="form-select" id="task-dep-input">
+          <option value="">-- なし --</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">メモ</label>
+      <textarea class="form-textarea" id="task-note-input" placeholder="詳細・注意事項など"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('task-modal')" style="background:#f1f5f9;color:var(--navy);">キャンセル</button>
+      <button class="btn btn-gold" onclick="saveTask()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 備品追加モーダル -->
+<div class="modal-overlay" id="supply-modal">
+  <div class="modal">
+    <div class="modal-title">📦 備品・発注追加</div>
+    <input type="hidden" id="supply-edit-id">
+    <div class="form-group">
+      <label class="form-label">品名 *</label>
+      <input type="text" class="form-input" id="supply-name-input" placeholder="例：マットレス（ダブル）">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">カテゴリ</label>
+        <select class="form-select" id="supply-cat-input">
+          <option value="家具">🛋 家具</option>
+          <option value="家電">📺 家電</option>
+          <option value="寝具">🛏 寝具</option>
+          <option value="アメニティ">🧴 アメニティ</option>
+          <option value="設備">🔧 設備</option>
+          <option value="その他">その他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">数量</label>
+        <input type="text" class="form-input" id="supply-qty-input" placeholder="例：1台">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">担当</label>
+        <select class="form-select" id="supply-person-input">
+          <option value="">-- 選択 --</option>
+          <option>石野祐太朗</option><option>森下秀之</option><option>水野萌</option>
+          <option>宇田身江子</option><option>真方伸彦</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ステータス</label>
+        <select class="form-select" id="supply-status-input">
+          <option value="未着手">未着手</option>
+          <option value="検討中">検討中</option>
+          <option value="発注済">発注済</option>
+          <option value="納品済">納品済</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">納期目安</label>
+        <input type="date" class="form-input" id="supply-due-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">金額（税込）</label>
+        <input type="number" class="form-input" id="supply-price-input" placeholder="0">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('supply-modal')" style="background:#f1f5f9;color:var(--navy);">キャンセル</button>
+      <button class="btn btn-gold" onclick="saveSupply()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 予算追加モーダル -->
+<div class="modal-overlay" id="budget-modal">
+  <div class="modal">
+    <div class="modal-title">💴 費目追加</div>
+    <input type="hidden" id="budget-edit-id">
+    <div class="form-group">
+      <label class="form-label">費目名 *</label>
+      <input type="text" class="form-input" id="budget-name-input" placeholder="例：消防設備工事費">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">カテゴリ</label>
+        <select class="form-select" id="budget-cat-input">
+          <option>消防設備</option><option>エアコン</option><option>電子錠</option>
+          <option>家具</option><option>家電</option><option>寝具</option>
+          <option>看板塗り替え</option><option>登記費用</option><option>行政書士</option>
+          <option>補修</option><option>アメニティ</option><option>撮影</option><option>その他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">担当</label>
+        <select class="form-select" id="budget-person-input">
+          <option value="">--</option>
+          <option>森下秀之</option><option>水野萌</option><option>宇田身江子</option><option>石野祐太朗</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">見積金額（税込）</label>
+        <input type="number" class="form-input" id="budget-est-input" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">発注金額（税込）</label>
+        <input type="number" class="form-input" id="budget-order-input" placeholder="0">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">稟議</label>
+        <select class="form-select" id="budget-ringi-input">
+          <option value="未">未申請</option>
+          <option value="申請中">申請中</option>
+          <option value="承認">承認済</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">支払済金額</label>
+        <input type="number" class="form-input" id="budget-paid-input" placeholder="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">メモ</label>
+      <input type="text" class="form-input" id="budget-memo-input" placeholder="備考">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('budget-modal')" style="background:#f1f5f9;color:var(--navy);">キャンセル</button>
+      <button class="btn btn-gold" onclick="saveBudget()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+let data = {
+  tasks: [],
+  supplies: [],
+  budget: []
+};
+
+const MEMBERS = [
+  { name:'石野祐太朗', role:'プロジェクトオーナー（総司令官）', org:'株式会社LIFEFUND', ext:false, commander:true },
+  { name:'森下秀之', role:'工事・施工管理', org:'株式会社LIFEFUND', ext:false },
+  { name:'水野萌', role:'インテリア・家電', org:'株式会社LIFEFUND', ext:false },
+  { name:'宇田身江子', role:'看板・外構', org:'株式会社LIFEFUND', ext:false },
+  { name:'板尾朋哉', role:'民泊開業届・行政手続き', org:'行政書士', ext:true },
+  { name:'中山亘', role:'設計・消防適合申請', org:'Wrap Architect Design', ext:true },
+  { name:'柳智宣', role:'消防設備工事', org:'正昴電工', ext:true },
+  { name:'真方伸彦', role:'民泊コンサル・清掃手配', org:'運営支援', ext:true },
+  { name:'大谷直弘', role:'登記（表題・保存）', org:'土地家屋調査士', ext:true },
+  { name:'インバウンドHD', role:'民泊運営（家主不在型管理）', org:'インバウンドホールディングス', ext:true },
+];
+
+const PHASES = [
+  { id:1, name:'Phase 1　登記', period:'〜6月末', items:'表題登記・保存登記完了', color:'#3b82f6' },
+  { id:2, name:'Phase 2　稟議・着工', period:'6/26〜7月初', items:'見積受領・稟議承認・工事着工', color:'#8b5cf6' },
+  { id:3, name:'Phase 3　工事', period:'7月中', items:'消防設備・エアコン・電子錠・補修・天井点検口', color:'#f59e0b' },
+  { id:4, name:'Phase 4　消防立合', period:'7月末', items:'消防検査立合・マットレス搬入', color:'#ef4444' },
+  { id:5, name:'Phase 5　届出準備', period:'8月初旬', items:'適合通知書交付・民泊届出提出', color:'#10b981' },
+  { id:6, name:'Phase 6　内装仕上げ', period:'8月中', items:'家具・家電・アメニティ設置', color:'#06b6d4' },
+  { id:7, name:'Phase 7　撮影・受理', period:'8末〜9/15', items:'写真撮影・清掃ブリーフィング・開業届受理', color:'#ec4899' },
+  { id:8, name:'Phase 8　開業', period:'9/16〜10/1', items:'試泊・OTAサイト公開・正式開業', color:'#c9a84c' },
+];
+
+const INITIAL_TASKS = [
+  { id:'t1', title:'消防設備　見積受領（柳様）', cat:'消防', status:'doing', main:'森下秀之', sub:'', due:'2026-06-26', dep:'', note:'6/26受領予定。稟議承認前に工事に入らないよう確認済み' },
+  { id:'t2', title:'消防設備工事　稟議申請・承認', cat:'消防', status:'todo', main:'森下秀之', sub:'石野祐太朗', due:'2026-06-27', dep:'t1', note:'見積受領後すみやかに申請' },
+  { id:'t3', title:'消防設備　工事着工', cat:'消防', status:'todo', main:'柳智宣', sub:'森下秀之', due:'2026-07-10', dep:'t2', note:'稟議承認後に着工' },
+  { id:'t4', title:'天井点検口　新設工事', cat:'消防', status:'todo', main:'柳智宣', sub:'', due:'2026-07-15', dep:'t3', note:'JWCAD図面にて位置確認済み。大工工事との調整要' },
+  { id:'t5', title:'消防検査　立合', cat:'消防', status:'todo', main:'柳智宣', sub:'中山亘', due:'2026-07-31', dep:'t3', note:'工事完了後・マットレス搬入後に実施' },
+  { id:'t6', title:'消防法令適合通知書　交付', cat:'消防', status:'todo', main:'中山亘', sub:'', due:'2026-08-07', dep:'t5', note:'立合から約1週間後。西消防署経由（中山先生担当）' },
+  { id:'t7', title:'保存登記完了', cat:'登記', status:'doing', main:'大谷直弘', sub:'', due:'2026-07-02', dep:'', note:'表題登記完了後→村松司法書士事務所へ' },
+  { id:'t8', title:'民泊開業届　提出', cat:'行政', status:'todo', main:'板尾朋哉', sub:'森下秀之', due:'2026-08-15', dep:'t6', note:'適合通知書・保存登記完了後に提出' },
+  { id:'t9', title:'民泊開業届　受理', cat:'行政', status:'todo', main:'板尾朋哉', sub:'', due:'2026-09-15', dep:'t8', note:'提出から約30日' },
+  { id:'t10', title:'エアコン工事　見積取得', cat:'設備', status:'todo', main:'森下秀之', sub:'', due:'2026-07-05', dep:'', note:'' },
+  { id:'t11', title:'電子錠　商品・取付ルート確定', cat:'設備', status:'todo', main:'真方伸彦', sub:'森下秀之', due:'2026-06-26', dep:'', note:'6/26打合せにて確定予定。OTA連携観点から真方さんに確認' },
+  { id:'t12', title:'エアコン工事　着工・完了', cat:'設備', status:'todo', main:'森下秀之', sub:'', due:'2026-07-31', dep:'t10', note:'撮影（8月末）前に完了必須' },
+  { id:'t13', title:'電子錠　取付工事', cat:'設備', status:'todo', main:'森下秀之', sub:'', due:'2026-07-31', dep:'t11', note:'' },
+  { id:'t14', title:'補修工事完了', cat:'設備', status:'todo', main:'森下秀之', sub:'', due:'2026-07-31', dep:'', note:'7月末必須' },
+  { id:'t15', title:'マットレス　発注・搬入', cat:'内装', status:'todo', main:'森下秀之', sub:'水野萌', due:'2026-07-25', dep:'', note:'消防立合前に搬入必要。発注から1週間で届く' },
+  { id:'t16', title:'家具　発注・搬入', cat:'内装', status:'todo', main:'水野萌', sub:'', due:'2026-08-20', dep:'', note:'ICコーディネートプランに基づき発注' },
+  { id:'t17', title:'家電　発注・設置', cat:'内装', status:'todo', main:'水野萌', sub:'森下秀之', due:'2026-08-20', dep:'', note:'撮影前に設置完了' },
+  { id:'t18', title:'アメニティ　セッティング', cat:'内装', status:'todo', main:'真方伸彦', sub:'水野萌', due:'2026-08-25', dep:'', note:'撮影前に完了' },
+  { id:'t19', title:'植栽剪定　見積・実施', cat:'その他', status:'todo', main:'森下秀之', sub:'', due:'2026-07-31', dep:'', note:'中庭植栽' },
+  { id:'t20', title:'看板塗り替え', cat:'その他', status:'todo', main:'宇田身江子', sub:'', due:'2026-07-31', dep:'', note:'ANDPAD管理。7/26予定（裏モデルハウスと同時施工）' },
+  { id:'t21', title:'コンセント増設（子供部屋2口）', cat:'設備', status:'todo', main:'森下秀之', sub:'', due:'2026-07-20', dep:'', note:'' },
+  { id:'t22', title:'ゴミ集積所　設置場所・商品確定', cat:'運営', status:'todo', main:'真方伸彦', sub:'森下秀之', due:'2026-06-26', dep:'', note:'6/26打合せにて確定予定' },
+  { id:'t23', title:'写真撮影', cat:'運営', status:'todo', main:'森下秀之', sub:'真方伸彦', due:'2026-08-28', dep:'t17', note:'OTAサイト・民泊HP用。撮影者手配要' },
+  { id:'t24', title:'OTAサイト掲載・民泊HP公開', cat:'運営', status:'todo', main:'インバウンドHD', sub:'', due:'2026-09-15', dep:'t9', note:'開業届受理後に公開' },
+  { id:'t25', title:'清掃会社手配・ブリーフィング', cat:'運営', status:'todo', main:'真方伸彦', sub:'', due:'2026-08-28', dep:'', note:'8月末目途' },
+  { id:'t26', title:'民泊運営看板　設置', cat:'運営', status:'todo', main:'森下秀之', sub:'', due:'2026-09-16', dep:'t9', note:'開業届受理後に設置' },
+  { id:'t27', title:'試泊（社内）', cat:'運営', status:'todo', main:'石野祐太朗', sub:'森下秀之', due:'2026-09-16', dep:'t9', note:'9/16実施予定' },
+];
+
+// ===== STORAGE =====
+const STORAGE_KEY = 'shitoro_minpaku_v1';
+let API_KEY = '';
+let BIN_ID = '';
+
+function loadLocal() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try { data = JSON.parse(saved); } catch(e){}
+  } else {
+    data = { tasks: JSON.parse(JSON.stringify(INITIAL_TASKS)), supplies: [], budget: getInitialBudget() };
+    saveLocal();
+  }
+  const settings = localStorage.getItem(STORAGE_KEY + '_settings');
+  if (settings) {
+    const s = JSON.parse(settings);
+    API_KEY = s.apikey || '';
+    BIN_ID = s.binid || '';
+  }
+}
+
+function saveLocal() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function getInitialBudget() {
+  return [
+    { id:'b1', name:'消防設備工事費', cat:'消防設備', person:'森下秀之', est:0, order:0, ringi:'未', paid:0, memo:'柳様より6/26見積受領予定' },
+    { id:'b2', name:'エアコン工事費', cat:'エアコン', person:'森下秀之', est:0, order:0, ringi:'未', paid:0, memo:'' },
+    { id:'b3', name:'電子錠　商品・工事費', cat:'電子錠', person:'森下秀之', est:0, order:0, ringi:'未', paid:0, memo:'6/26打合せで商品確定' },
+    { id:'b4', name:'看板塗り替え費', cat:'看板塗り替え', person:'宇田身江子', est:0, order:0, ringi:'未', paid:0, memo:'7/26予定' },
+    { id:'b5', name:'登記費用（表題・保存）', cat:'登記費用', person:'森下秀之', est:0, order:0, ringi:'未', paid:0, memo:'大谷先生・村松司法書士' },
+    { id:'b6', name:'行政書士費用', cat:'行政書士', person:'森下秀之', est:0, order:0, ringi:'未', paid:0, memo:'板尾先生' },
+  ];
+}
+
+// ===== CLOUD SYNC =====
+async function syncFromCloud() {
+  if (!API_KEY || !BIN_ID) { updateSyncStatus('ローカルモード（設定タブでクラウド同期を設定できます）'); return; }
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+      headers: { 'X-Master-Key': API_KEY }
+    });
+    if (res.ok) {
+      const json = await res.json();
+      data = json.record;
+      saveLocal();
+      updateSyncStatus('クラウド同期済 ✓');
+    } else {
+      updateSyncStatus('同期エラー（ローカルデータを表示中）');
+    }
+  } catch(e) {
+    updateSyncStatus('ローカルモード');
+  }
+  renderAll();
+}
+
+async function syncToCloud() {
+  if (!API_KEY || !BIN_ID) return;
+  saveLocal();
+  try {
+    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+      method: 'PUT',
+      headers: { 'X-Master-Key': API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    updateSyncStatus('クラウド保存済 ✓ ' + new Date().toLocaleTimeString('ja-JP'));
+  } catch(e) {}
+}
+
+function updateSyncStatus(msg) {
+  const el = document.getElementById('sync-status');
+  if (el) el.textContent = msg;
+}
+
+// ===== RENDER =====
+function renderAll() {
+  renderPhases();
+  renderTasks('all');
+  renderSupplies('all');
+  renderBudget();
+  renderMembers();
+  updateOverallProgress();
+}
+
+function updateOverallProgress() {
+  const tasks = data.tasks || [];
+  const done = tasks.filter(t => t.status === 'done').length;
+  const doing = tasks.filter(t => t.status === 'doing').length;
+  const todo = tasks.filter(t => t.status === 'todo' || t.status === 'hold').length;
+  const total = tasks.length;
+  const pct = total ? Math.round(done / total * 100) : 0;
+
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-doing').textContent = doing;
+  document.getElementById('stat-todo').textContent = todo;
+  document.getElementById('overall-pct').textContent = pct + '%';
+
+  const circ = document.getElementById('progress-circle-arc');
+  const r = 28; const c = 2 * Math.PI * r;
+  circ.setAttribute('stroke-dashoffset', c - (c * pct / 100));
+}
+
+function renderPhases() {
+  const container = document.getElementById('phase-rows');
+  container.innerHTML = PHASES.map(p => {
+    const phaseTasks = (data.tasks || []).filter(t => getPhaseForTask(t) === p.id);
+    const done = phaseTasks.filter(t => t.status === 'done').length;
+    const pct = phaseTasks.length ? Math.round(done / phaseTasks.length * 100) : 0;
+    const statusBadge = pct === 100 ? '<span class="badge badge-done">完了</span>' :
+      phaseTasks.some(t => t.status === 'doing') ? '<span class="badge badge-doing">進行中</span>' :
+      pct > 0 ? '<span class="badge badge-doing">一部完了</span>' :
+      '<span class="badge badge-todo">未着手</span>';
+    return `<div class="phase-row">
+      <div>
+        <div class="phase-name">${p.name}</div>
+        <div class="phase-period">${p.period}</div>
+        <div class="phase-items">${p.items}</div>
+      </div>
+      <div>
+        <div class="phase-bar-wrap">
+          <div class="phase-bar" style="width:${pct}%;background:${p.color};" data-pct="${pct}"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">${done}/${phaseTasks.length} タスク完了</div>
+      </div>
+      <div class="phase-status">${statusBadge}</div>
+    </div>`;
+  }).join('');
+}
+
+function getPhaseForTask(t) {
+  const m = { 't7':1, 't1':2,'t2':2, 't3':3,'t4':3,'t10':3,'t11':3,'t12':3,'t13':3,'t14':3,'t19':3,'t20':3,'t21':3,'t22':3,
+    't5':4,'t15':4, 't6':5,'t8':5, 't16':6,'t17':6,'t18':6,'t25':6, 't9':7,'t23':7, 't24':8,'t26':8,'t27':8 };
+  return m[t.id] || 7;
+}
+
+let currentTaskFilter = 'all';
+function renderTasks(filter) {
+  currentTaskFilter = filter;
+  const container = document.getElementById('task-list');
+  const tasks = data.tasks || [];
+  const filtered = filter === 'all' ? tasks : tasks.filter(t => t.cat === filter);
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">タスクがありません</div></div>`;
+    return;
+  }
+
+  // 依存関係で前提が未完了のものをロック
+  const doneIds = new Set(tasks.filter(t => t.status === 'done').map(t => t.id));
+
+  container.innerHTML = filtered.map(t => {
+    const locked = t.dep && !doneIds.has(t.dep);
+    const depTask = t.dep ? tasks.find(x => x.id === t.dep) : null;
+    const statusBadge = statusHtml(t.status);
+    const assigneeHtml = `<span class="task-assignee">👤 ${t.main || '未定'}</span>${t.sub ? `<span class="task-assignee">👤 ${t.sub}</span>` : ''}`;
+    const depHtml = locked && depTask ? `<span class="task-dep">🔒 「${depTask.title}」完了後</span>` : '';
+    const dueHtml = t.due ? `<span class="task-due">📅 ${t.due}</span>` : '';
+    return `<div class="task-card${locked?' locked':''}">
+      <div>
+        <div class="task-title">${statusIcon(t.status)} ${t.title}</div>
+        ${t.note ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">${t.note}</div>` : ''}
+        <div class="task-meta">
+          ${assigneeHtml}
+          <span class="task-cat">${t.cat}</span>
+          ${depHtml}
+          ${dueHtml}
+          ${statusBadge}
+        </div>
+      </div>
+      <div class="task-actions">
+        <select class="status-sel" onchange="changeTaskStatus('${t.id}', this.value)" ${locked?'disabled':''}>
+          <option value="todo" ${t.status==='todo'?'selected':''}>未着手</option>
+          <option value="doing" ${t.status==='doing'?'selected':''}>進行中</option>
+          <option value="done" ${t.status==='done'?'selected':''}>完了</option>
+          <option value="hold" ${t.status==='hold'?'selected':''}>保留</option>
+        </select>
+        <button class="btn btn-sm" style="background:#f1f5f9;" onclick="editTask('${t.id}')">編集</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteTask('${t.id}')">削除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function statusHtml(s) {
+  const map = { todo:'<span class="badge badge-todo">未着手</span>', doing:'<span class="badge badge-doing">進行中</span>', done:'<span class="badge badge-done">完了</span>', hold:'<span class="badge badge-hold">保留</span>' };
+  return map[s] || '';
+}
+function statusIcon(s) { return { todo:'⬜', doing:'🔵', done:'✅', hold:'⏸️' }[s] || '⬜'; }
+
+function changeTaskStatus(id, status) {
+  const t = data.tasks.find(x => x.id === id);
+  if (t) { t.status = status; saveLocal(); syncToCloud(); renderAll(); }
+}
+
+function renderSupplies(filter) {
+  const tbody = document.getElementById('supply-tbody');
+  const items = data.supplies || [];
+  const filtered = filter === 'all' ? items : items.filter(s => s.cat === filter);
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted);">備品データがありません。「追加」ボタンから登録してください。</td></tr>';
+    return;
+  }
+  const statusColor = { '未着手':'#f1f5f9', '検討中':'#dbeafe', '発注済':'#fef3c7', '納品済':'#d1fae5' };
+  tbody.innerHTML = filtered.map(s => `<tr>
+    <td style="font-weight:600;">${s.name}</td>
+    <td>${s.cat}</td>
+    <td>${s.qty || '—'}</td>
+    <td>${s.person || '—'}</td>
+    <td><span style="background:${statusColor[s.status]||'#f1f5f9'};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;">${s.status}</span></td>
+    <td>${s.due || '—'}</td>
+    <td class="amount">${s.price ? '¥' + Number(s.price).toLocaleString() : '—'}</td>
+    <td style="display:flex;gap:4px;">
+      <button class="btn btn-sm" style="background:#f1f5f9;" onclick="editSupply('${s.id}')">編集</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteSupply('${s.id}')">削除</button>
+    </td>
+  </tr>`).join('');
+}
+
+function renderBudget() {
+  const items = data.budget || [];
+  const totalEst = items.reduce((s, b) => s + (Number(b.est) || 0), 0);
+  const totalOrder = items.reduce((s, b) => s + (Number(b.order) || 0), 0);
+  const totalPaid = items.reduce((s, b) => s + (Number(b.paid) || 0), 0);
+  document.getElementById('budget-summary').innerHTML = `
+    <div class="budget-stat"><div class="budget-stat-label">見積合計</div><div class="budget-stat-value">¥${totalEst.toLocaleString()}</div><div class="budget-stat-sub">税込</div></div>
+    <div class="budget-stat"><div class="budget-stat-label">発注合計</div><div class="budget-stat-value">¥${totalOrder.toLocaleString()}</div><div class="budget-stat-sub">税込</div></div>
+    <div class="budget-stat"><div class="budget-stat-label">支払済</div><div class="budget-stat-value">¥${totalPaid.toLocaleString()}</div><div class="budget-stat-sub">税込</div></div>
+    <div class="budget-stat"><div class="budget-stat-label">費目数</div><div class="budget-stat-value">${items.length}</div><div class="budget-stat-sub">件</div></div>`;
+
+  const ringiColor = { '未':'#fee2e2', '申請中':'#fef3c7', '承認':'#d1fae5' };
+  document.getElementById('budget-tbody').innerHTML = items.length ? items.map(b => `<tr>
+    <td style="font-weight:600;">${b.name}</td>
+    <td>${b.cat}</td>
+    <td>${b.person || '—'}</td>
+    <td class="amount">${b.est ? '¥' + Number(b.est).toLocaleString() : '—'}</td>
+    <td><span style="background:${ringiColor[b.ringi]||'#f1f5f9'};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;">${b.ringi}</span></td>
+    <td class="amount">${b.order ? '¥' + Number(b.order).toLocaleString() : '—'}</td>
+    <td class="amount">${b.paid ? '¥' + Number(b.paid).toLocaleString() : '—'}</td>
+    <td style="font-size:12px;color:var(--text-muted);">${b.memo || ''}</td>
+    <td style="display:flex;gap:4px;">
+      <button class="btn btn-sm" style="background:#f1f5f9;" onclick="editBudget('${b.id}')">編集</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteBudget('${b.id}')">削除</button>
+    </td>
+  </tr>`).join('') :
+  '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted);">費目データがありません</td></tr>';
+}
+
+function renderMembers() {
+  document.getElementById('members-grid').innerHTML = MEMBERS.map(m => {
+    const initials = m.name.substring(0,2);
+    return `<div class="member-card${m.commander?' commander':''}">
+      ${m.commander ? '<div class="commander-badge">👑 総司令官</div>' : ''}
+      <div class="member-avatar">${initials}</div>
+      <div class="member-name">${m.name}</div>
+      <div class="member-role">${m.role}</div>
+      <div class="member-org${m.ext?' external':''}">${m.org}</div>
+    </div>`;
+  }).join('');
+}
+
+// ===== CRUD =====
+function genId(prefix) { return prefix + Date.now(); }
+
+function saveTask() {
+  const id = document.getElementById('task-edit-id').value;
+  const title = document.getElementById('task-title-input').value.trim();
+  if (!title) { alert('タスク名を入力してください'); return; }
+  const task = {
+    id: id || genId('t'),
+    title, cat: document.getElementById('task-cat-input').value,
+    status: document.getElementById('task-status-input').value,
+    main: document.getElementById('task-main-input').value,
+    sub: document.getElementById('task-sub-input').value,
+    due: document.getElementById('task-due-input').value,
+    dep: document.getElementById('task-dep-input').value,
+    note: document.getElementById('task-note-input').value,
+  };
+  if (id) { const i = data.tasks.findIndex(t => t.id === id); if (i >= 0) data.tasks[i] = task; }
+  else data.tasks.push(task);
+  saveLocal(); syncToCloud(); renderAll(); closeModal('task-modal');
+}
+
+function editTask(id) {
+  const t = data.tasks.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('task-edit-id').value = t.id;
+  document.getElementById('task-title-input').value = t.title;
+  document.getElementById('task-cat-input').value = t.cat;
+  document.getElementById('task-status-input').value = t.status;
+  document.getElementById('task-main-input').value = t.main || '';
+  document.getElementById('task-sub-input').value = t.sub || '';
+  document.getElementById('task-due-input').value = t.due || '';
+  document.getElementById('task-note-input').value = t.note || '';
+  populateDepSelect(id);
+  document.getElementById('task-dep-input').value = t.dep || '';
+  openModal('task-modal');
+}
+
+function deleteTask(id) {
+  if (!confirm('このタスクを削除しますか？')) return;
+  data.tasks = data.tasks.filter(t => t.id !== id);
+  saveLocal(); syncToCloud(); renderAll();
+}
+
+function populateDepSelect(excludeId) {
+  const sel = document.getElementById('task-dep-input');
+  sel.innerHTML = '<option value="">-- なし --</option>';
+  (data.tasks || []).filter(t => t.id !== excludeId).forEach(t => {
+    sel.innerHTML += `<option value="${t.id}">${t.title}</option>`;
+  });
+}
+
+function saveSupply() {
+  const id = document.getElementById('supply-edit-id').value;
+  const name = document.getElementById('supply-name-input').value.trim();
+  if (!name) { alert('品名を入力してください'); return; }
+  const item = {
+    id: id || genId('s'),
+    name, cat: document.getElementById('supply-cat-input').value,
+    qty: document.getElementById('supply-qty-input').value,
+    person: document.getElementById('supply-person-input').value,
+    status: document.getElementById('supply-status-input').value,
+    due: document.getElementById('supply-due-input').value,
+    price: document.getElementById('supply-price-input').value,
+  };
+  if (id) { const i = data.supplies.findIndex(x => x.id === id); if (i >= 0) data.supplies[i] = item; }
+  else data.supplies.push(item);
+  saveLocal(); syncToCloud(); renderAll(); closeModal('supply-modal');
+}
+
+function editSupply(id) {
+  const s = data.supplies.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('supply-edit-id').value = s.id;
+  document.getElementById('supply-name-input').value = s.name;
+  document.getElementById('supply-cat-input').value = s.cat;
+  document.getElementById('supply-qty-input').value = s.qty || '';
+  document.getElementById('supply-person-input').value = s.person || '';
+  document.getElementById('supply-status-input').value = s.status;
+  document.getElementById('supply-due-input').value = s.due || '';
+  document.getElementById('supply-price-input').value = s.price || '';
+  openModal('supply-modal');
+}
+
+function deleteSupply(id) {
+  if (!confirm('削除しますか？')) return;
+  data.supplies = data.supplies.filter(x => x.id !== id);
+  saveLocal(); syncToCloud(); renderSupplies(currentSupplyFilter||'all');
+}
+
+function saveBudget() {
+  const id = document.getElementById('budget-edit-id').value;
+  const name = document.getElementById('budget-name-input').value.trim();
+  if (!name) { alert('費目名を入力してください'); return; }
+  const item = {
+    id: id || genId('b'),
+    name, cat: document.getElementById('budget-cat-input').value,
+    person: document.getElementById('budget-person-input').value,
+    est: document.getElementById('budget-est-input').value,
+    order: document.getElementById('budget-order-input').value,
+    ringi: document.getElementById('budget-ringi-input').value,
+    paid: document.getElementById('budget-paid-input').value,
+    memo: document.getElementById('budget-memo-input').value,
+  };
+  if (id) { const i = data.budget.findIndex(x => x.id === id); if (i >= 0) data.budget[i] = item; }
+  else data.budget.push(item);
+  saveLocal(); syncToCloud(); renderBudget(); closeModal('budget-modal');
+}
+
+function editBudget(id) {
+  const b = data.budget.find(x => x.id === id);
+  if (!b) return;
+  document.getElementById('budget-edit-id').value = b.id;
+  document.getElementById('budget-name-input').value = b.name;
+  document.getElementById('budget-cat-input').value = b.cat;
+  document.getElementById('budget-person-input').value = b.person || '';
+  document.getElementById('budget-est-input').value = b.est || '';
+  document.getElementById('budget-order-input').value = b.order || '';
+  document.getElementById('budget-ringi-input').value = b.ringi;
+  document.getElementById('budget-paid-input').value = b.paid || '';
+  document.getElementById('budget-memo-input').value = b.memo || '';
+  openModal('budget-modal');
+}
+
+function deleteBudget(id) {
+  if (!confirm('削除しますか？')) return;
+  data.budget = data.budget.filter(x => x.id !== id);
+  saveLocal(); syncToCloud(); renderBudget();
+}
+
+// ===== SETTINGS =====
+function saveSettings() {
+  API_KEY = document.getElementById('setting-apikey').value.trim();
+  BIN_ID = document.getElementById('setting-binid').value.trim();
+  localStorage.setItem(STORAGE_KEY + '_settings', JSON.stringify({ apikey: API_KEY, binid: BIN_ID }));
+  document.getElementById('setting-result').innerHTML = '<span style="color:var(--success);">✓ 設定を保存しました</span>';
+}
+
+async function testConnection() {
+  const key = document.getElementById('setting-apikey').value.trim();
+  const bin = document.getElementById('setting-binid').value.trim();
+  document.getElementById('setting-result').textContent = '接続確認中...';
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${bin}/latest`, { headers: { 'X-Master-Key': key } });
+    if (res.ok) {
+      document.getElementById('setting-result').innerHTML = '<span style="color:var(--success);">✓ 接続成功！</span>';
+    } else {
+      document.getElementById('setting-result').innerHTML = '<span style="color:var(--danger);">✗ 接続失敗（APIキー・BIN IDを確認してください）</span>';
+    }
+  } catch(e) {
+    document.getElementById('setting-result').innerHTML = '<span style="color:var(--danger);">✗ ネットワークエラー</span>';
+  }
+}
+
+async function createNewBin() {
+  const key = document.getElementById('setting-apikey').value.trim();
+  if (!key) { alert('先にAPIキーを入力してください'); return; }
+  document.getElementById('setting-result').textContent = 'BIN作成中...';
+  try {
+    const res = await fetch('https://api.jsonbin.io/v3/b', {
+      method: 'POST',
+      headers: { 'X-Master-Key': key, 'Content-Type': 'application/json', 'X-Bin-Name': 'shitoro-minpaku' },
+      body: JSON.stringify(data)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      const newId = json.metadata.id;
+      document.getElementById('setting-binid').value = newId;
+      BIN_ID = newId;
+      localStorage.setItem(STORAGE_KEY + '_settings', JSON.stringify({ apikey: key, binid: newId }));
+      document.getElementById('setting-result').innerHTML = `<span style="color:var(--success);">✓ BIN作成成功！BIN ID: ${newId}</span>`;
+    } else {
+      document.getElementById('setting-result').innerHTML = '<span style="color:var(--danger);">✗ BIN作成失敗</span>';
+    }
+  } catch(e) {
+    document.getElementById('setting-result').innerHTML = '<span style="color:var(--danger);">✗ エラー</span>';
+  }
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'shitoro_minpaku_data.json'; a.click();
+}
+
+function importData() { document.getElementById('import-file').click(); }
+function handleImport(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try { data = JSON.parse(ev.target.result); saveLocal(); syncToCloud(); renderAll(); alert('インポート完了'); }
+    catch(e) { alert('JSONの形式が正しくありません'); }
+  };
+  reader.readAsText(file);
+}
+
+function resetData() {
+  if (!confirm('すべてのデータをリセットしますか？\n（初期タスクに戻ります）')) return;
+  data = { tasks: JSON.parse(JSON.stringify(INITIAL_TASKS)), supplies: [], budget: getInitialBudget() };
+  saveLocal(); syncToCloud(); renderAll(); alert('リセットしました');
+}
+
+// ===== MODAL =====
+function openModal(id) {
+  if (id === 'task-modal') {
+    const editId = document.getElementById('task-edit-id').value;
+    if (!editId) {
+      document.getElementById('task-edit-id').value = '';
+      document.getElementById('task-title-input').value = '';
+      document.getElementById('task-cat-input').value = 'その他';
+      document.getElementById('task-status-input').value = 'todo';
+      document.getElementById('task-main-input').value = '';
+      document.getElementById('task-sub-input').value = '';
+      document.getElementById('task-due-input').value = '';
+      document.getElementById('task-note-input').value = '';
+      populateDepSelect('');
+    }
+  }
+  if (id === 'supply-modal') {
+    document.getElementById('supply-edit-id').value = '';
+    ['supply-name-input','supply-qty-input','supply-due-input','supply-price-input'].forEach(x => document.getElementById(x).value = '');
+  }
+  if (id === 'budget-modal') {
+    document.getElementById('budget-edit-id').value = '';
+    ['budget-name-input','budget-est-input','budget-order-input','budget-paid-input','budget-memo-input'].forEach(x => document.getElementById(x).value = '');
+    document.getElementById('budget-ringi-input').value = '未';
+  }
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
+
+// ===== TABS =====
+let currentSupplyFilter = 'all';
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+document.querySelectorAll('#task-filters .filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#task-filters .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTasks(btn.dataset.filter);
+  });
+});
+
+document.querySelectorAll('#supply-filters .filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#supply-filters .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSupplyFilter = btn.dataset.filter;
+    renderSupplies(btn.dataset.filter);
+  });
+});
+
+// ===== SETTINGS INPUT PREFILL =====
+function loadSettingsInputs() {
+  document.getElementById('setting-apikey').value = API_KEY || '';
+  document.getElementById('setting-binid').value = BIN_ID || '';
+}
+
+// ===== DATE =====
+document.getElementById('today-date').textContent = new Date().toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit', weekday:'short' });
+
+// ===== INIT =====
+loadLocal();
+loadSettingsInputs();
+renderAll();
+syncFromCloud();
+</script>
+</body>
+</html>
