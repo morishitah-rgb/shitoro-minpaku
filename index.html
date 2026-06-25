@@ -228,6 +228,9 @@
     display: inline;
   }
   .editable-click:hover { border-bottom-color: var(--gold); color: var(--gold); }
+  .task-note-area { margin-top:4px; padding:3px 6px; border-radius:4px; cursor:pointer; min-height:20px; font-size:12px; border-bottom:1.5px dashed transparent; transition:border-color 0.15s,background 0.15s; }
+  .task-note-area:hover { border-bottom-color: var(--gold); background:#fefdf5; }
+  .note-placeholder { color:#b0b8c8; font-style:italic; font-size:11px; }
   .inline-input {
     font-size: inherit; font-family: inherit; font-weight: inherit; color: var(--navy);
     border: 1.5px solid var(--gold); border-radius: 4px; padding: 2px 6px;
@@ -1443,21 +1446,20 @@ function renderTasks(filter) {
           <span>${statusIcon(t.status)}</span>
           <span class="editable-click" onclick="inlineEditText(this,'${t.id}','title')" title="クリックで編集">${t.title}</span>
         </div>
-        ${t.note ? `<div style="font-size:12px;color:var(--text-muted);margin:2px 0 4px;">${t.note}</div>` : ''}
         <div class="task-meta">
           <span class="task-assignee" title="クリックで名前編集">
             <span class="task-avatar" style="background:${personColor(t.main||'')};">${personInitial(t.main||'')}</span>
             <span class="editable-click" onclick="inlineEditText(this,'${t.id}','main')">${t.main || '未定'}</span>
           </span>
           ${t.sub ? `<span class="task-assignee"><span class="task-avatar sub" style="background:${personColor(t.sub)};"><span>${personInitial(t.sub)}</span></span><span class="editable-click" onclick="inlineEditText(this,'${t.id}','sub')">${t.sub}</span></span>` : ''}
-          <span class="task-cat">${t.cat}</span>
+          <span class="task-cat editable-click" onclick="inlineEditTaskCat(this,'${t.id}')" title="クリックでカテゴリ変更">${t.cat}</span>
           ${depHtml}
           <span class="task-due" title="クリックで日付変更">📅 <span class="editable-click" onclick="inlineEditDate(this,'${t.id}','due')">${dueFmt}</span></span>
         </div>
+        <div class="task-note-area editable-click" onclick="inlineEditTaskNote(this,'${t.id}')" title="クリックでメモ編集">${t.note ? `<span style="color:var(--text-muted);font-size:12px;">📝 ${t.note}</span>` : '<span class="note-placeholder">＋ メモを追加...</span>'}</div>
       </div>
       <div class="task-actions">
         <span class="badge badge-${t.status}" style="${locked?'':'cursor:pointer;'}" ${statusCycle}>${statusLabel(t.status)}</span>
-        <button class="btn btn-sm" style="background:#f1f5f9;padding:4px 8px;" onclick="editTask('${t.id}')" title="詳細編集（メモ・依存関係）">✏️</button>
         <button class="btn btn-sm btn-danger" onclick="deleteTask('${t.id}')">✕</button>
       </div>
     </div>`;
@@ -1515,6 +1517,84 @@ function cycleStatus(taskId) {
   const cycle = ['todo', 'doing', 'done', 'hold'];
   t.status = cycle[(cycle.indexOf(t.status) + 1) % cycle.length];
   saveLocal(); syncToCloud(); renderAll();
+}
+
+function inlineEditTaskCat(el, taskId) {
+  const task = data.tasks.find(t => t.id === taskId);
+  if (!task) return;
+  const old = task.cat || '';
+  const choices = ['消防','登記','内装','設備','行政','運営','その他'];
+  const sel = document.createElement('select');
+  sel.className = 'inline-input';
+  choices.forEach(c => { const o = document.createElement('option'); o.value=c; o.textContent=c; if(c===old) o.selected=true; sel.appendChild(o); });
+  el.replaceWith(sel); sel.focus();
+  const save = () => { task.cat = sel.value; saveLocal(); syncToCloud(); renderTasks(currentTaskFilter); };
+  sel.addEventListener('change', save);
+  sel.addEventListener('blur', () => renderTasks(currentTaskFilter));
+}
+
+function inlineEditTaskNote(el, taskId) {
+  const task = data.tasks.find(t => t.id === taskId);
+  if (!task) return;
+  const old = task.note || '';
+  const ta = document.createElement('textarea');
+  ta.className = 'inline-input'; ta.value = old;
+  ta.style.cssText = 'width:100%;min-height:52px;font-size:12px;resize:vertical;';
+  el.replaceWith(ta); ta.focus();
+  const save = () => { task.note = ta.value.trim(); saveLocal(); syncToCloud(); renderTasks(currentTaskFilter); };
+  ta.addEventListener('blur', save);
+  ta.addEventListener('keydown', e => { if(e.key==='Escape'){ task.note=old; renderTasks(currentTaskFilter); } });
+}
+
+// ===== INLINE EDIT: SUPPLY =====
+function inlineEditSupply(el, id, field, type) {
+  const item = data.supplies.find(x => x.id === id);
+  if (!item) return;
+  const old = item[field] != null ? String(item[field]) : '';
+  let input;
+  if (type === 'select-cat') {
+    input = document.createElement('select'); input.className = 'inline-input';
+    ['家具','家電','寝具','アメニティ','設備','その他'].forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; if(c===old) o.selected=true; input.appendChild(o); });
+  } else if (type === 'select-status') {
+    input = document.createElement('select'); input.className = 'inline-input';
+    ['未着手','検討中','発注済','納品済'].forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; if(c===old) o.selected=true; input.appendChild(o); });
+  } else if (type === 'date') {
+    input = document.createElement('input'); input.type='date'; input.className='inline-input'; input.value=old;
+  } else if (type === 'number') {
+    if (!budgetUnlocked) { tryUnlockBudget(); return; }
+    input = document.createElement('input'); input.type='number'; input.className='inline-input'; input.value=old; input.style.width='100px';
+  } else {
+    input = document.createElement('input'); input.type='text'; input.className='inline-input'; input.value=old; input.style.width=Math.max(80,old.length*10)+'px';
+  }
+  el.replaceWith(input); input.focus(); if(input.select) input.select();
+  const redraw = () => renderSupplies(currentSupplyFilter || 'all');
+  const save = () => { item[field]=input.value; saveLocal(); syncToCloud(); redraw(); };
+  if (type.startsWith('select') || type==='date') { input.addEventListener('change', save); input.addEventListener('blur', redraw); }
+  else { input.addEventListener('blur', save); input.addEventListener('keydown', e => { if(e.key==='Enter') input.blur(); if(e.key==='Escape'){ item[field]=old; redraw(); } }); }
+}
+
+// ===== INLINE EDIT: BUDGET =====
+function inlineEditBudget(el, id, field, type) {
+  const item = data.budget.find(x => x.id === id);
+  if (!item) return;
+  const old = item[field] != null ? String(item[field]) : '';
+  let input;
+  if (type === 'select-cat') {
+    input = document.createElement('select'); input.className = 'inline-input';
+    ['消防設備','エアコン','電子錠','家具','家電','看板','登記','行政書士','補修','アメニティ','撮影','その他'].forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; if(c===old) o.selected=true; input.appendChild(o); });
+  } else if (type === 'select-ringi') {
+    input = document.createElement('select'); input.className = 'inline-input';
+    ['未','申請中','承認'].forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; if(c===old) o.selected=true; input.appendChild(o); });
+  } else if (type === 'number') {
+    if (!budgetUnlocked) { tryUnlockBudget(); return; }
+    input = document.createElement('input'); input.type='number'; input.className='inline-input'; input.value=old; input.style.width='110px';
+  } else {
+    input = document.createElement('input'); input.type='text'; input.className='inline-input'; input.value=old; input.style.width=Math.max(80,old.length*10)+'px';
+  }
+  el.replaceWith(input); input.focus(); if(input.select) input.select();
+  const save = () => { item[field]=input.value; saveLocal(); syncToCloud(); renderBudget(); };
+  if (type.startsWith('select')) { input.addEventListener('change', save); input.addEventListener('blur', () => renderBudget()); }
+  else { input.addEventListener('blur', save); input.addEventListener('keydown', e => { if(e.key==='Enter') input.blur(); if(e.key==='Escape'){ item[field]=old; renderBudget(); } }); }
 }
 
 // ===== PIN LOCK =====
@@ -1619,17 +1699,14 @@ function renderSupplies(filter) {
   }
   const statusColor = { '未着手':'#f1f5f9', '検討中':'#dbeafe', '発注済':'#fef3c7', '納品済':'#d1fae5' };
   tbody.innerHTML = filtered.map(s => `<tr>
-    <td style="font-weight:600;">${s.name}</td>
-    <td>${s.cat}</td>
-    <td>${s.qty || '—'}</td>
-    <td>${s.person || '—'}</td>
-    <td><span style="background:${statusColor[s.status]||'#f1f5f9'};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;">${s.status}</span></td>
-    <td>${s.due || '—'}</td>
-    <td class="amount">${amountHtml(s.price, 'tryUnlockBudget()')}</td>
-    <td style="display:flex;gap:4px;">
-      <button class="btn btn-sm" style="background:#f1f5f9;" onclick="editSupply('${s.id}')">✏️</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteSupply('${s.id}')">✕</button>
-    </td>
+    <td style="font-weight:600;"><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','name','text')">${s.name}</span></td>
+    <td><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','cat','select-cat')">${s.cat}</span></td>
+    <td><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','qty','text')">${s.qty || '—'}</span></td>
+    <td><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','person','text')">${s.person || '—'}</span></td>
+    <td><span class="editable-click" style="background:${statusColor[s.status]||'#f1f5f9'};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;" onclick="inlineEditSupply(this,'${s.id}','status','select-status')">${s.status}</span></td>
+    <td><span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','due','date')">${s.due || '—'}</span></td>
+    <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','price','number')">${s.price ? '¥'+Number(s.price).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
+    <td><button class="btn btn-sm btn-danger" onclick="deleteSupply('${s.id}')">✕</button></td>
   </tr>`).join('');
 }
 
@@ -1655,18 +1732,15 @@ function renderBudget() {
 
   const ringiColor = { '未':'#fee2e2', '申請中':'#fef3c7', '承認':'#d1fae5' };
   document.getElementById('budget-tbody').innerHTML = items.length ? items.map(b => `<tr>
-    <td style="font-weight:600;">${b.name}</td>
-    <td>${b.cat}</td>
-    <td>${b.person || '—'}</td>
-    <td class="amount">${A(b.est)}</td>
-    <td><span style="background:${ringiColor[b.ringi]||'#f1f5f9'};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;">${b.ringi}</span></td>
-    <td class="amount">${A(b.order)}</td>
-    <td class="amount">${A(b.paid)}</td>
-    <td style="font-size:12px;color:var(--text-muted);">${b.memo || ''}</td>
-    <td style="display:flex;gap:4px;">
-      <button class="btn btn-sm" style="background:#f1f5f9;" onclick="editBudget('${b.id}')">✏️</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteBudget('${b.id}')">✕</button>
-    </td>
+    <td style="font-weight:600;"><span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','name','text')">${b.name}</span></td>
+    <td><span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','cat','select-cat')">${b.cat}</span></td>
+    <td><span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','person','text')">${b.person || '—'}</span></td>
+    <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','est','number')">${b.est ? '¥'+Number(b.est).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
+    <td><span class="editable-click" style="background:${ringiColor[b.ringi]||'#f1f5f9'};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;" onclick="inlineEditBudget(this,'${b.id}','ringi','select-ringi')">${b.ringi}</span></td>
+    <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','order','number')">${b.order ? '¥'+Number(b.order).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
+    <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','paid','number')">${b.paid ? '¥'+Number(b.paid).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
+    <td><span class="editable-click" style="font-size:12px;color:var(--text-muted);" onclick="inlineEditBudget(this,'${b.id}','memo','text')">${b.memo || '—'}</span></td>
+    <td><button class="btn btn-sm btn-danger" onclick="deleteBudget('${b.id}')">✕</button></td>
   </tr>`).join('') :
   '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted);">費目データがありません</td></tr>';
 }
