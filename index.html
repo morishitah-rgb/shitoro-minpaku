@@ -231,6 +231,11 @@
   .task-note-area { margin-top:4px; padding:3px 6px; border-radius:4px; cursor:pointer; min-height:20px; font-size:12px; border-bottom:1.5px dashed transparent; transition:border-color 0.15s,background 0.15s; }
   .task-note-area:hover { border-bottom-color: var(--gold); background:#fefdf5; }
   .note-placeholder { color:#b0b8c8; font-style:italic; font-size:11px; }
+  .supplies-agg-row { background:#f0f6ff; cursor:pointer; }
+  .supplies-agg-row:hover { background:#e6f0ff; }
+  .supplies-agg-row td { font-size:13px; border-top:2px solid var(--navy); }
+  .supply-subrow { background:#f8fafc; }
+  .supply-subrow td { border-left:3px solid var(--gold-light); }
   .inline-input {
     font-size: inherit; font-family: inherit; font-weight: inherit; color: var(--navy);
     border: 1.5px solid var(--gold); border-radius: 4px; padding: 2px 6px;
@@ -1800,19 +1805,46 @@ function renderBudget() {
       ? `<div class="lock-banner"><span class="lock-banner-text">🔓 社員モード（金額表示中）</span><button class="btn btn-sm" style="background:#f1f5f9;" onclick="lockBudget()">ロックする</button></div>`
       : `<div class="lock-banner"><span class="lock-banner-text">🔒 金額は社員PINでのみ表示されます</span><button class="btn btn-gold btn-sm" onclick="tryUnlockBudget()">PINで解除</button></div>`;
   }
-  const totalEst = items.reduce((s, b) => s + (Number(b.est) || 0), 0);
+  const supplies = data.supplies || [];
+  const supplyTotal = supplies.reduce((s, x) => s + (Number(x.price) || 0), 0);
+  const totalEst = items.reduce((s, b) => s + (Number(b.est) || 0), 0) + supplyTotal;
   const totalOrder = items.reduce((s, b) => s + (Number(b.order) || 0), 0);
   const totalPaid = items.reduce((s, b) => s + (Number(b.paid) || 0), 0);
   const A = v => amountHtml(v, 'tryUnlockBudget()');
   const sumVal = v => budgetUnlocked ? '¥' + v.toLocaleString() : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`;
   document.getElementById('budget-summary').innerHTML = `
-    <div class="budget-stat"><div class="budget-stat-label">見積合計</div><div class="budget-stat-value">${sumVal(totalEst)}</div><div class="budget-stat-sub">税込</div></div>
+    <div class="budget-stat"><div class="budget-stat-label">見積合計</div><div class="budget-stat-value">${sumVal(totalEst)}</div><div class="budget-stat-sub">工事費＋備品費</div></div>
     <div class="budget-stat"><div class="budget-stat-label">発注合計</div><div class="budget-stat-value">${sumVal(totalOrder)}</div><div class="budget-stat-sub">税込</div></div>
     <div class="budget-stat"><div class="budget-stat-label">支払済</div><div class="budget-stat-value">${sumVal(totalPaid)}</div><div class="budget-stat-sub">税込</div></div>
-    <div class="budget-stat"><div class="budget-stat-label">費目数</div><div class="budget-stat-value">${items.length}</div><div class="budget-stat-sub">件</div></div>`;
+    <div class="budget-stat"><div class="budget-stat-label">費目数</div><div class="budget-stat-value">${items.length + 1}</div><div class="budget-stat-sub">件（備品含む）</div></div>`;
 
   const ringiColor = { '未':'#fee2e2', '申請中':'#fef3c7', '承認':'#d1fae5' };
-  document.getElementById('budget-tbody').innerHTML = items.length ? items.map(b => `<tr>
+  const statusColor = { '未着手':'#f1f5f9', '検討中':'#dbeafe', '発注済':'#fef3c7', '納品済':'#d1fae5' };
+
+  // 備品費集計行の内訳（展開時）
+  const supplySubRows = suppliesRowExpanded ? supplies.map(s => `<tr class="supply-subrow">
+    <td style="padding-left:28px;font-size:12px;color:var(--navy);">└ ${s.name}</td>
+    <td style="font-size:12px;color:var(--text-muted);">${s.cat}</td>
+    <td style="font-size:12px;">${s.person || '—'}</td>
+    <td class="amount" style="font-size:12px;">${budgetUnlocked ? (s.price ? '¥'+Number(s.price).toLocaleString() : '—') : '<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>'}</td>
+    <td><span style="background:${statusColor[s.status]||'#f1f5f9'};padding:2px 8px;border-radius:20px;font-size:11px;">${s.status}</span></td>
+    <td style="font-size:12px;color:var(--text-muted);" colspan="2">${s.due || '—'}</td>
+    <td style="font-size:12px;color:var(--text-muted);">${s.qty ? s.qty+'個' : ''}</td>
+    <td></td>
+  </tr>`).join('') : '';
+
+  // 備品費集計行
+  const supplyAggRow = `<tr class="supplies-agg-row" onclick="toggleSuppliesRow()">
+    <td style="font-weight:700;">📦 備品費（一式）</td>
+    <td style="font-size:12px;color:var(--text-muted);">家具・家電・アメニティ等</td>
+    <td style="font-size:12px;color:var(--text-muted);">—</td>
+    <td class="amount">${budgetUnlocked ? '<b>¥'+supplyTotal.toLocaleString()+'</b>' : '<span class="amount-locked" onclick="event.stopPropagation();tryUnlockBudget()">🔒 ****</span>'}</td>
+    <td>—</td><td>—</td><td>—</td>
+    <td style="font-size:12px;color:var(--text-muted);">備品タブより自動集計（${supplies.length}件）</td>
+    <td style="font-size:18px;line-height:1;">${suppliesRowExpanded ? '▲' : '▼'}</td>
+  </tr>${supplySubRows}`;
+
+  document.getElementById('budget-tbody').innerHTML = (items.length ? items.map(b => `<tr>
     <td style="font-weight:600;"><span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','name','text')">${b.name}</span></td>
     <td><span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','cat','select-cat')">${b.cat}</span></td>
     <td><span class="editable-click" onclick="inlineEditMemberSelect(this,data.budget,'${b.id}','person',()=>renderBudget())">${b.person || '—'}</span></td>
@@ -1822,8 +1854,13 @@ function renderBudget() {
     <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','paid','number')">${b.paid ? '¥'+Number(b.paid).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
     <td><span class="editable-click" style="font-size:12px;color:var(--text-muted);" onclick="inlineEditBudget(this,'${b.id}','memo','text')">${b.memo || '—'}</span></td>
     <td><button class="btn btn-sm btn-danger" onclick="deleteBudget('${b.id}')">✕</button></td>
-  </tr>`).join('') :
-  '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted);">費目データがありません</td></tr>';
+  </tr>`).join('') : '') + supplyAggRow;
+}
+
+let suppliesRowExpanded = false;
+function toggleSuppliesRow() {
+  suppliesRowExpanded = !suppliesRowExpanded;
+  renderBudget();
 }
 
 function renderMembers() {
