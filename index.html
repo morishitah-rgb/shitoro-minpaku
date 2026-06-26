@@ -750,10 +750,10 @@
       </div>
       <div class="milestone-item">
         <div class="milestone-dot"></div>
-        <div class="milestone-date-tag">9/16</div>
+        <div class="milestone-date-tag">9/22</div>
         <div class="milestone-content">
-          <div class="milestone-title">試泊（社内）・OTAサイト公開</div>
-          <div class="milestone-sub">最終確認</div>
+          <div class="milestone-title">試泊（社内）・OTAサイト予約開始</div>
+          <div class="milestone-sub">最終確認・予約受付開始</div>
         </div>
       </div>
       <div class="milestone-item final">
@@ -1488,7 +1488,7 @@ const PHASES = [
   { id:5, name:'Phase 5　届出準備', period:'8月初旬', items:'適合通知書交付・民泊届出提出', color:'#10b981' },
   { id:6, name:'Phase 6　内装仕上げ', period:'8月中', items:'家具・家電・アメニティ設置', color:'#06b6d4' },
   { id:7, name:'Phase 7　撮影・受理', period:'8末〜9/15', items:'写真撮影・清掃ブリーフィング・開業届受理', color:'#ec4899' },
-  { id:8, name:'Phase 8　開業', period:'9/16〜10/1', items:'試泊・OTAサイト公開・正式開業', color:'#c9a84c' },
+  { id:8, name:'Phase 8　開業', period:'9/22〜10/1', items:'試泊・OTAサイト予約開始・正式開業', color:'#c9a84c' },
 ];
 
 const INITIAL_TASKS = [
@@ -1515,10 +1515,10 @@ const INITIAL_TASKS = [
   { id:'t21', title:'コンセント増設（子供部屋2口）', cat:'設備', status:'todo', main:'森下秀之', sub:'', due:'2026-07-20', dep:'', note:'' },
   { id:'t22', title:'ゴミ集積所　設置場所・商品確定', cat:'運営', status:'todo', main:'真方伸彦', sub:'森下秀之', due:'2026-06-26', dep:'', note:'6/26打合せにて確定予定' },
   { id:'t23', title:'写真撮影', cat:'運営', status:'todo', main:'森下秀之', sub:'真方伸彦', due:'2026-08-31', note:'OTAサイト・民泊HP用。撮影者手配要。8月下旬までに実施' },
-  { id:'t24', title:'OTAサイト掲載・民泊HP公開', cat:'運営', status:'todo', main:'インバウンドHD', sub:'', due:'2026-09-15', dep:'t9', note:'開業届受理後に公開' },
+  { id:'t24', title:'OTAサイト掲載・民泊HP公開', cat:'運営', status:'todo', main:'インバウンドHD', sub:'', due:'2026-09-22', dep:'t9', note:'開業届受理後に公開。予約開始9/22予定' },
   { id:'t25', title:'清掃会社手配・ブリーフィング', cat:'運営', status:'todo', main:'真方伸彦', sub:'', due:'2026-08-28', dep:'', note:'8月末目途' },
   { id:'t26', title:'民泊運営看板　設置', cat:'運営', status:'todo', main:'森下秀之', sub:'', due:'2026-09-16', dep:'t9', note:'開業届受理後に設置' },
-  { id:'t27', title:'試泊（社内）', cat:'運営', status:'todo', main:'石野祐太朗', sub:'森下秀之', due:'2026-09-16', dep:'t9', note:'9/16実施予定' },
+  { id:'t27', title:'試泊（社内）', cat:'運営', status:'todo', main:'石野祐太朗', sub:'森下秀之', due:'2026-09-22', dep:'t9', note:'9/22実施予定（OTAサイト予約開始と同日）' },
   { id:'t28', title:'民泊事業届出書類　作成依頼（板尾先生）', cat:'行政', status:'todo', main:'板尾朋哉', sub:'森下秀之', due:'2026-07-15', dep:'', note:'中山先生より依頼：適合通知申請に静岡県提出用の民泊事業届書類が必要。住宅宿泊事業届出書・誓約書等。板尾先生に作成依頼する。' },
   { id:'t29', title:'工事スケジュール　中山先生へ共有', cat:'消防', status:'todo', main:'森下秀之', sub:'', due:'2026-06-30', dep:'t2', note:'稟議承認後、着工スケジュールが確定したら中山先生（Wrap Architect Design）へ連絡。適合通知申請のスケジュール調整に必要。' },
   { id:'t30', title:'消防法令適合通知書交付申請', cat:'消防', status:'todo', main:'中山亘', sub:'森下秀之', due:'2026-07-31', dep:'t5', note:'消防検査立合後に中山先生が西消防署へ申請。民泊事業届書類（板尾先生作成）も必要。' },
