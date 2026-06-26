@@ -358,11 +358,25 @@
   .budget-stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
   .budget-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .budget-table th { background: var(--navy); color: white; padding: 10px 12px; text-align: left; font-size: 12px; letter-spacing: 0.03em; }
-  .budget-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  .budget-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
   .budget-table tbody tr { transition: background 0.12s; }
   .budget-table tbody tr:hover td { background: #f0f6ff; }
   .budget-table tbody tr:hover td:first-child { border-left: 3px solid var(--gold); }
   .amount { text-align: right; font-weight: 600; font-family: monospace; }
+  /* ドラッグハンドル */
+  .drag-handle { cursor: grab; color: #cbd5e1; font-size: 16px; padding: 0 6px !important; user-select: none; }
+  .drag-handle:active { cursor: grabbing; }
+  .budget-item-row.dragging { opacity: 0.4; }
+  .budget-item-row.drag-over td { background: #dbeafe !important; border-top: 2px solid #3b82f6; }
+  /* 非課税行 */
+  .tax-exempt-row td { background: #f0fdfa !important; }
+  .tax-exempt-row:hover td { background: #ccfbf1 !important; }
+  /* 税金内訳表示 */
+  .tax-sub { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .tax-exempt-label { font-size: 10px; color: #0891b2; font-weight: 600; }
+  .tax-exempt-toggle { cursor: pointer; display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: #64748b; white-space: nowrap; }
+  .tax-amount-inc { font-weight: 700; color: var(--navy); }
+  .tax-amount-ex { font-size: 11px; color: #64748b; }
 
   /* ===== PERSON CHIP (テーブル内担当表示) ===== */
   .person-chip {
@@ -843,8 +857,9 @@
       <table class="budget-table">
         <thead>
           <tr>
+            <th style="width:28px;padding:0;"></th>
             <th>費目</th><th>カテゴリ</th><th>担当</th>
-            <th>予算（見積）</th><th>稟議</th><th>実績（発注）</th><th>差異</th><th>添付</th><th>メモ</th><th>操作</th>
+            <th>予算（税込 / 税抜）</th><th>稟議</th><th>実績（税込 / 税抜）</th><th>差異</th><th>添付</th><th>メモ</th><th>操作</th>
           </tr>
         </thead>
         <tbody id="budget-tbody"></tbody>
@@ -2151,9 +2166,25 @@ function renderBudget() {
     if (totalEst === 0 && totalAct === 0) return '—';
     return `<span class="${d >= 0 ? 'diff-ok' : 'diff-over'}" style="font-size:1.1em;font-weight:700;">${d >= 0 ? '-' : '+'}¥${Math.abs(d).toLocaleString()}</span>`;
   };
+  // 税抜き合計も計算
+  const toEx = (item_list) => item_list.reduce((s, b) => {
+    const inc = Number(b.est) || 0;
+    return s + (b.tax_exempt ? inc : Math.round(inc / 1.1));
+  }, 0);
+  const toExAct = (item_list) => item_list.reduce((s, b) => {
+    const inc = Number(b.actual) || 0;
+    return s + (b.tax_exempt ? inc : Math.round(inc / 1.1));
+  }, 0);
+  const supplyEstEx = Math.round(supplyEstTotal / 1.1);
+  const supplyActEx = Math.round(supplyActTotal / 1.1);
+  const totalEstEx = toEx(items) + supplyEstEx;
+  const totalActEx = toExAct(items) + supplyActEx;
+  const sumVal2 = (inc, ex) => budgetUnlocked
+    ? `<div class="budget-stat-value">¥${inc.toLocaleString()}</div><div style="font-size:11px;color:#64748b;">税抜 ¥${ex.toLocaleString()}</div>`
+    : `<div class="budget-stat-value"><span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span></div>`;
   document.getElementById('budget-summary').innerHTML = `
-    <div class="budget-stat"><div class="budget-stat-label">予算合計</div><div class="budget-stat-value">${sumVal(totalEst)}</div><div class="budget-stat-sub">工事費＋備品費</div></div>
-    <div class="budget-stat"><div class="budget-stat-label">実績合計</div><div class="budget-stat-value">${sumVal(totalAct)}</div><div class="budget-stat-sub">税込</div></div>
+    <div class="budget-stat"><div class="budget-stat-label">予算合計（税込）</div>${sumVal2(totalEst, totalEstEx)}<div class="budget-stat-sub">工事費＋備品費</div></div>
+    <div class="budget-stat"><div class="budget-stat-label">実績合計（税込）</div>${sumVal2(totalAct, totalActEx)}<div class="budget-stat-sub">発注済み合計</div></div>
     <div class="budget-stat"><div class="budget-stat-label">差異</div><div class="budget-stat-value">${sumDiff(totalDiff)}</div><div class="budget-stat-sub">${totalDiff >= 0 ? '予算内' : '予算超過'}</div></div>
     <div class="budget-stat"><div class="budget-stat-label">費目数</div><div class="budget-stat-value">${items.length + 1}</div><div class="budget-stat-sub">件（備品含む）</div></div>`;
 
@@ -2195,31 +2226,51 @@ function renderBudget() {
     <td style="font-size:18px;line-height:1;">${suppliesRowExpanded ? '▲' : '▼'}</td>
   </tr>${supplySubRows}`;
 
-  document.getElementById('budget-tbody').innerHTML = (items.length ? items.map(b => {
+  document.getElementById('budget-tbody').innerHTML = (items.length ? items.map((b, idx) => {
     const be = Number(b.est)||0, ba = Number(b.actual)||0, bd = be - ba;
     const diffHtml = (be>0&&ba>0) ? `<span class="${bd>=0?'diff-ok':'diff-over'}">${bd>=0?'-':'+'}¥${Math.abs(bd).toLocaleString()}</span>` : '<span style="color:#94a3b8;">—</span>';
     const attachKey = 'attach_b_' + b.id;
     const hasAttach = !!localStorage.getItem(STORAGE_KEY + '_' + attachKey);
-    // 税計算
-    const taxSubHtml = (amt) => {
-      if (!amt) return '';
-      if (b.tax_exempt) return '<div style="font-size:10px;color:#0891b2;">非課税</div>';
-      const ex = Math.round(amt / 1.1), tx = amt - ex;
-      return `<div style="font-size:10px;color:#64748b;">税抜¥${ex.toLocaleString()} / 消費税¥${tx.toLocaleString()}</div>`;
+    const isExempt = !!b.tax_exempt;
+    // 税込/税抜セル
+    const amtCell = (amt, field) => {
+      if (!budgetUnlocked) return `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`;
+      const exAmt = isExempt ? amt : Math.round(amt / 1.1);
+      const txAmt = isExempt ? 0 : (amt - exAmt);
+      return `<div>
+        <span class="tax-amount-inc editable-click" onclick="inlineEditBudgetTax(this,'${b.id}','${field}','in')">${amt ? '¥'+amt.toLocaleString() : '<span style="color:#94a3b8;">—</span>'}</span>
+        <span style="font-size:10px;color:#94a3b8;margin-left:2px;">税込</span>
+      </div>
+      <div class="tax-sub">
+        ${isExempt
+          ? '<span class="tax-exempt-label">非課税</span>'
+          : `税抜 <span class="editable-click" style="font-weight:600;" onclick="inlineEditBudgetTax(this,'${b.id}','${field}','ex')">${amt ? '¥'+exAmt.toLocaleString() : '—'}</span>　消費税 ¥${txAmt.toLocaleString()}`
+        }
+      </div>`;
     };
-    return `<tr>
-    <td style="font-weight:600;"><span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','name','text')">${b.name}</span></td>
+    return `<tr class="budget-item-row${isExempt?' tax-exempt-row':''}" draggable="true" data-idx="${idx}">
+    <td class="drag-handle" title="ドラッグで並び替え">⠿</td>
+    <td style="font-weight:600;">
+      <span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','name','text')">${b.name}</span>
+      <div style="margin-top:4px;">
+        <label class="tax-exempt-toggle" title="非課税（登記・印紙など）">
+          <input type="checkbox" ${isExempt?'checked':''} onchange="toggleBudgetTaxExempt('${b.id}')" style="width:13px;height:13px;">
+          非課税
+        </label>
+      </div>
+    </td>
     <td><span class="editable-click cat-badge" style="${catBadgeStyle(b.cat)}" onclick="inlineEditBudget(this,'${b.id}','cat','select-cat')">${b.cat}</span></td>
     <td onclick="inlineEditMemberSelect(this,data.budget,'${b.id}','person',()=>renderBudget())">${personChipHtml(b.person)}</td>
-    <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','est','number')">${b.est ? '¥'+Number(b.est).toLocaleString()+'<span style="font-size:10px;font-weight:400;color:#94a3b8;">税込</span>' : '—'}</span>${taxSubHtml(be)}` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
+    <td class="amount">${amtCell(be,'est')}</td>
     <td><span class="editable-click" style="background:${ringiColor[b.ringi]||'#f1f5f9'};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;" onclick="inlineEditBudget(this,'${b.id}','ringi','select-ringi')">${b.ringi}</span></td>
-    <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','actual','number')">${b.actual ? '¥'+Number(b.actual).toLocaleString()+'<span style="font-size:10px;font-weight:400;color:#94a3b8;">税込</span>' : '—'}</span>${taxSubHtml(ba)}` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
+    <td class="amount">${amtCell(ba,'actual')}</td>
     <td class="amount">${budgetUnlocked ? diffHtml : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
     <td><button class="attach-btn ${hasAttach ? 'has-attach' : ''}" onclick="openAttach('budget','${b.id}')" title="見積・領収書を添付">${hasAttach ? '📎✓' : '📎'}</button></td>
     <td><span class="editable-click" style="font-size:12px;color:var(--text-muted);" onclick="inlineEditBudget(this,'${b.id}','memo','text')">${b.memo || '—'}</span></td>
     <td><button class="btn btn-sm btn-danger" onclick="deleteBudget('${b.id}')">✕</button></td>
   </tr>`;
   }).join('') : '') + supplyAggRow;
+  initBudgetDrag();
 }
 
 let suppliesRowExpanded = false;
@@ -2332,6 +2383,67 @@ function deleteSupply(id) {
   if (!confirm('削除しますか？')) return;
   data.supplies = data.supplies.filter(x => x.id !== id);
   saveLocal(); syncToCloud(); renderSupplies(currentSupplyFilter||'all');
+}
+
+// テーブル行内での税込/税抜インライン編集
+function inlineEditBudgetTax(el, id, field, inputType) {
+  if (!budgetUnlocked) { tryUnlockBudget(); return; }
+  const item = data.budget.find(x => x.id === id);
+  if (!item) return;
+  const isExempt = !!item.tax_exempt;
+  const curInc = Number(item[field]) || 0;
+  const curEx = isExempt ? curInc : Math.round(curInc / 1.1);
+  const curVal = inputType === 'in' ? curInc : curEx;
+  const input = document.createElement('input');
+  input.type = 'number'; input.className = 'inline-input';
+  input.value = curVal || ''; input.style.width = '100px';
+  el.replaceWith(input); input.focus(); if (input.select) input.select();
+  const save = () => {
+    const v = parseFloat(input.value) || 0;
+    item[field] = inputType === 'in' ? v : (isExempt ? v : Math.round(v * 1.1));
+    saveLocal(); syncToCloud(); renderBudget();
+  };
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', e => { if (e.key==='Enter') input.blur(); if (e.key==='Escape') renderBudget(); });
+}
+
+// 非課税トグル（テーブル行チェックボックス）
+function toggleBudgetTaxExempt(id) {
+  const item = data.budget.find(x => x.id === id);
+  if (!item) return;
+  item.tax_exempt = !item.tax_exempt;
+  saveLocal(); syncToCloud(); renderBudget();
+}
+
+// ドラッグ&ドロップ行並び替え
+function initBudgetDrag() {
+  const tbody = document.getElementById('budget-tbody');
+  if (!tbody) return;
+  let dragSrcIdx = -1;
+  const rows = tbody.querySelectorAll('tr.budget-item-row');
+  rows.forEach((row, i) => {
+    row.addEventListener('dragstart', e => {
+      dragSrcIdx = i; row.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      tbody.querySelectorAll('tr').forEach(r => r.classList.remove('drag-over'));
+    });
+    row.addEventListener('dragover', e => {
+      e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+      tbody.querySelectorAll('tr').forEach(r => r.classList.remove('drag-over'));
+      row.classList.add('drag-over');
+    });
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      if (dragSrcIdx !== i && dragSrcIdx >= 0) {
+        const [moved] = data.budget.splice(dragSrcIdx, 1);
+        data.budget.splice(i, 0, moved);
+        saveLocal(); syncToCloud(); renderBudget();
+      }
+    });
+  });
 }
 
 function calcTaxFrom(field, source) {
