@@ -162,6 +162,14 @@
     font-size: 15px; font-weight: 800; color: var(--navy);
   }
   .milestone-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .milestone-item.tbd .milestone-dot { background: #e2e8f0; border: 2px dashed #94a3b8; }
+  .milestone-item.tbd .milestone-date-tag { background: #f1f5f9; color: #64748b; border: 1.5px dashed #94a3b8; font-size: 10px; }
+  .milestone-del-btn { position:absolute; right:0; top:50%; transform:translateY(-50%); background:none; border:none; color:#cbd5e1; font-size:14px; cursor:pointer; padding:4px 6px; border-radius:4px; opacity:0; transition:opacity 0.15s; }
+  .milestone-item { position:relative; }
+  .milestone-item:hover .milestone-del-btn { opacity:1; }
+  .milestone-item:hover .milestone-del-btn:hover { color:#ef4444; background:#fee2e2; }
+  .milestone-add-btn { margin-top:10px; margin-left:0; padding:6px 14px; background:#f8fafc; border:1.5px dashed #cbd5e1; border-radius:8px; color:#64748b; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.15s; }
+  .milestone-add-btn:hover { border-color:var(--navy); color:var(--navy); background:#f0f4ff; }
 
   /* ===== GANTT CHART ===== */
   .gantt-wrap { overflow-x: auto; }
@@ -672,98 +680,13 @@
     </div>
   </div>
 
-  <!-- マイルストーン -->
+  <!-- マイルストーン（動的） -->
   <div class="card" style="margin-bottom:20px;">
-    <div class="card-title">🚩 マイルストーン</div>
-    <div class="milestone-timeline">
-      <div class="milestone-item">
-        <div class="milestone-dot"></div>
-        <div class="milestone-date-tag">6/26</div>
-        <div class="milestone-content">
-          <div class="milestone-title">消防設備　見積受領（柳様）</div>
-          <div class="milestone-sub">稟議申請へ</div>
-        </div>
-      </div>
-      <div class="milestone-item">
-        <div class="milestone-dot"></div>
-        <div class="milestone-date-tag">6月末</div>
-        <div class="milestone-content">
-          <div class="milestone-title">表題登記・保存登記　完了</div>
-          <div class="milestone-sub">大谷先生・村松司法書士</div>
-        </div>
-      </div>
-      <div class="milestone-item">
-        <div class="milestone-dot"></div>
-        <div class="milestone-date-tag">7月初旬</div>
-        <div class="milestone-content">
-          <div class="milestone-title">稟議承認　→　各工事着工</div>
-          <div class="milestone-sub">消防設備・エアコン・電子錠・補修</div>
-        </div>
-      </div>
-      <div class="milestone-item">
-        <div class="milestone-dot"></div>
-        <div class="milestone-date-tag">7月末</div>
-        <div class="milestone-content">
-          <div class="milestone-title">消防検査立合・工事完了・マットレス搬入</div>
-          <div class="milestone-sub">柳様・中山様立会</div>
-        </div>
-      </div>
-      <div class="milestone-item">
-        <div class="milestone-dot"></div>
-        <div class="milestone-date-tag">8月初旬</div>
-        <div class="milestone-content">
-          <div class="milestone-title">消防法令適合通知書　交付</div>
-          <div class="milestone-sub">交付まで約1週間</div>
-        </div>
-      </div>
-      <div class="milestone-item">
-        <div class="milestone-dot"></div>
-        <div class="milestone-date-tag">8月中旬</div>
-        <div class="milestone-content">
-          <div class="milestone-title">民泊開業届　提出</div>
-          <div class="milestone-sub">板尾先生（行政書士）</div>
-        </div>
-      </div>
-      <div class="milestone-item">
-        <div class="milestone-dot"></div>
-        <div class="milestone-date-tag">8月中旬</div>
-        <div class="milestone-content">
-          <div class="milestone-title">家具・家電・アメニティ　設置完了</div>
-          <div class="milestone-sub">水野さん・髙松さん</div>
-        </div>
-      </div>
-      <div class="milestone-item">
-        <div class="milestone-dot"></div>
-        <div class="milestone-date-tag">8月末</div>
-        <div class="milestone-content">
-          <div class="milestone-title">写真撮影・清掃ブリーフィング</div>
-          <div class="milestone-sub">OTA掲載用撮影</div>
-        </div>
-      </div>
-      <div class="milestone-item">
-        <div class="milestone-dot"></div>
-        <div class="milestone-date-tag">9/15</div>
-        <div class="milestone-content">
-          <div class="milestone-title">開業届　受理</div>
-          <div class="milestone-sub">住宅宿泊事業法</div>
-        </div>
-      </div>
-      <div class="milestone-item">
-        <div class="milestone-dot"></div>
-        <div class="milestone-date-tag">9/22</div>
-        <div class="milestone-content">
-          <div class="milestone-title">試泊（社内）・OTAサイト予約開始</div>
-          <div class="milestone-sub">最終確認・予約受付開始</div>
-        </div>
-      </div>
-      <div class="milestone-item final">
-        <div class="milestone-dot final"></div>
-        <div class="milestone-date-tag">10/1</div>
-        <div class="milestone-content">
-          <div class="milestone-title">🎉　正式開業！</div>
-        </div>
-      </div>
+    <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+      <span>🚩 マイルストーン</span>
+      <span style="font-size:11px;color:#64748b;font-weight:400;">クリックで編集できます</span>
     </div>
+    <div class="milestone-timeline" id="milestone-timeline-list"></div>
   </div>
 
   <!-- フェーズ・ガントチャート -->
@@ -1519,9 +1442,25 @@ const INITIAL_TASKS = [
   { id:'t25', title:'清掃会社手配・ブリーフィング', cat:'運営', status:'todo', main:'真方伸彦', sub:'', due:'2026-08-28', dep:'', note:'8月末目途' },
   { id:'t26', title:'民泊運営看板　設置', cat:'運営', status:'todo', main:'森下秀之', sub:'', due:'2026-09-16', dep:'t9', note:'開業届受理後に設置' },
   { id:'t27', title:'試泊（社内）', cat:'運営', status:'todo', main:'石野祐太朗', sub:'森下秀之', due:'2026-09-22', dep:'t9', note:'9/22実施予定（OTAサイト予約開始と同日）' },
+  { id:'t31', title:'WiFi工事', cat:'設備', status:'todo', main:'森下秀之', sub:'', due:'', dep:'', note:'工事日未定。日程確定次第工程表に反映予定' },
   { id:'t28', title:'民泊事業届出書類　作成依頼（板尾先生）', cat:'行政', status:'todo', main:'板尾朋哉', sub:'森下秀之', due:'2026-07-15', dep:'', note:'中山先生より依頼：適合通知申請に静岡県提出用の民泊事業届書類が必要。住宅宿泊事業届出書・誓約書等。板尾先生に作成依頼する。' },
   { id:'t29', title:'工事スケジュール　中山先生へ共有', cat:'消防', status:'todo', main:'森下秀之', sub:'', due:'2026-06-30', dep:'t2', note:'稟議承認後、着工スケジュールが確定したら中山先生（Wrap Architect Design）へ連絡。適合通知申請のスケジュール調整に必要。' },
   { id:'t30', title:'消防法令適合通知書交付申請', cat:'消防', status:'todo', main:'中山亘', sub:'森下秀之', due:'2026-07-31', dep:'t5', note:'消防検査立合後に中山先生が西消防署へ申請。民泊事業届書類（板尾先生作成）も必要。' },
+];
+
+const INITIAL_MILESTONES = [
+  { id:'m1',  sortDate:'2026-06-26', label:'6/26',   title:'消防設備　見積受領（柳様）',          sub:'稟議申請へ' },
+  { id:'m2',  sortDate:'2026-06-30', label:'6月末',  title:'表題登記・保存登記　完了',            sub:'大谷先生・村松司法書士' },
+  { id:'m3',  sortDate:'2026-07-05', label:'7月初旬',title:'稟議承認　→　各工事着工',            sub:'消防設備・エアコン・電子錠・補修' },
+  { id:'m4',  sortDate:'2026-07-31', label:'7月末',  title:'消防検査立合・工事完了・マットレス搬入',sub:'柳様・中山様立会' },
+  { id:'m5',  sortDate:'2026-08-07', label:'8月初旬',title:'消防法令適合通知書　交付',            sub:'交付まで約1週間' },
+  { id:'m6',  sortDate:'2026-08-15', label:'8月中旬',title:'民泊開業届　提出',                   sub:'板尾先生（行政書士）' },
+  { id:'m7',  sortDate:'2026-08-20', label:'8月中旬',title:'家具・家電・アメニティ　設置完了',    sub:'水野さん・髙松さん' },
+  { id:'m8',  sortDate:'2026-08-31', label:'8月末',  title:'写真撮影・清掃ブリーフィング',        sub:'OTA掲載用撮影' },
+  { id:'m9',  sortDate:'2026-09-15', label:'9/15',   title:'開業届　受理',                       sub:'住宅宿泊事業法' },
+  { id:'m10', sortDate:'2026-09-22', label:'9/22',   title:'試泊（社内）・OTAサイト予約開始',     sub:'最終確認・予約受付開始' },
+  { id:'m-wifi', sortDate:null, label:'未定', title:'WiFi工事', sub:'工事日確定次第更新', tbd:true },
+  { id:'m-final', sortDate:'2026-10-01', label:'10/1', title:'🎉　正式開業！', sub:'', final:true },
 ];
 
 // ===== STORAGE =====
@@ -1545,7 +1484,20 @@ function loadLocal() {
   if (saved) {
     try { data = JSON.parse(saved); } catch(e){}
   } else {
-    data = { tasks: JSON.parse(JSON.stringify(INITIAL_TASKS)), supplies: [], budget: getInitialBudget() };
+    data = { tasks: JSON.parse(JSON.stringify(INITIAL_TASKS)), supplies: [], budget: getInitialBudget(), docs: [], milestones: INITIAL_MILESTONES.map(m=>({...m})) };
+    saveLocal();
+  }
+  // マイルストーン未設定の既存データを初期化
+  if (!data.milestones || !data.milestones.length) {
+    data.milestones = INITIAL_MILESTONES.map(m => ({...m}));
+    saveLocal();
+  }
+  // WiFi工事マイルストーンが既存データに未追加なら追加
+  if (!data.milestones.find(m => m.id === 'm-wifi')) {
+    const finalIdx = data.milestones.findIndex(m => m.final);
+    const wifi = { id:'m-wifi', sortDate:null, label:'未定', title:'WiFi工事', sub:'工事日確定次第更新', tbd:true };
+    if (finalIdx >= 0) data.milestones.splice(finalIdx, 0, wifi);
+    else data.milestones.push(wifi);
     saveLocal();
   }
   const settings = localStorage.getItem(STORAGE_KEY + '_settings');
@@ -1613,12 +1565,95 @@ function updateSyncStatus(msg) {
 // ===== RENDER =====
 function renderAll() {
   renderPhases();
+  renderMilestones();
   renderTasks('all');
   renderSupplies('all');
   renderBudget();
   renderMembers();
   renderDocs();
   updateOverallProgress();
+}
+
+function renderMilestones() {
+  const container = document.getElementById('milestone-timeline-list');
+  if (!container) return;
+  if (!data.milestones || !data.milestones.length) data.milestones = INITIAL_MILESTONES.map(m=>({...m}));
+  const sorted = [...data.milestones].sort((a, b) => {
+    if (a.final) return 1; if (b.final) return -1;
+    if (a.tbd && !b.tbd) return 1; if (!a.tbd && b.tbd) return -1;
+    if (a.sortDate && b.sortDate) return a.sortDate < b.sortDate ? -1 : 1;
+    return 0;
+  });
+  container.innerHTML = sorted.map(m => {
+    const isTbd = m.tbd || !m.sortDate;
+    const itemCls = 'milestone-item' + (m.final?' final':'') + (isTbd?' tbd':'');
+    const dotCls  = 'milestone-dot'  + (m.final?' final':'');
+    const dateCls = 'milestone-date-tag' + (m.final?' final':'');
+    const dateDisplay = isTbd ? '📅 未定' : m.label;
+    return `<div class="${itemCls}" data-mid="${m.id}">
+      <div class="${dotCls}"></div>
+      <div class="${dateCls}" style="cursor:pointer;" onclick="inlineEditMilestone('${m.id}','label')">
+        <span id="mlabel-${m.id}">${dateDisplay}</span>
+      </div>
+      <div class="milestone-content">
+        <div class="milestone-title">
+          <span class="editable-click" id="mtitle-${m.id}" onclick="inlineEditMilestone('${m.id}','title')">${m.title}</span>
+        </div>
+        <div class="milestone-sub">
+          <span class="editable-click" id="msub-${m.id}" style="${m.sub?'':'color:#94a3b8;'}" onclick="inlineEditMilestone('${m.id}','sub')">${m.sub||'＋ 補足追加'}</span>
+        </div>
+      </div>
+      ${!m.final ? `<button class="milestone-del-btn" onclick="deleteMilestone('${m.id}')" title="削除">✕</button>` : ''}
+    </div>`;
+  }).join('') +
+  `<button class="milestone-add-btn" onclick="addMilestone()">＋ マイルストーン追加</button>`;
+}
+
+function inlineEditMilestone(id, field) {
+  const m = data.milestones.find(x => x.id === id);
+  if (!m) return;
+  const elId = field === 'label' ? `mlabel-${id}` : (field === 'title' ? `mtitle-${id}` : `msub-${id}`);
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const old = field === 'label' ? m.label : (m[field] || '');
+  const input = document.createElement('input');
+  input.type = 'text'; input.className = 'inline-input'; input.value = old;
+  input.style.width = field === 'label' ? '72px' : Math.max(120, old.length * 9) + 'px';
+  if (field === 'label') input.placeholder = '例: 7/15 または 7月末';
+  el.replaceWith(input); input.focus(); if (input.select) input.select();
+  const save = () => {
+    const v = input.value.trim();
+    if (field === 'label') {
+      m.label = v || '未定';
+      const md = v.match(/^(\d{1,2})\/(\d{1,2})$/);
+      const my = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (md) { m.sortDate = `2026-${md[1].padStart(2,'0')}-${md[2].padStart(2,'0')}`; m.tbd = false; }
+      else if (my) { m.sortDate = v; m.tbd = false; }
+      else if (!v || v === '未定') { m.sortDate = null; m.tbd = true; m.label = '未定'; }
+      else { m.sortDate = null; }
+    } else {
+      m[field] = v;
+    }
+    saveLocal(); syncToCloud(); renderMilestones();
+  };
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', e => { if (e.key==='Enter') input.blur(); if (e.key==='Escape') renderMilestones(); });
+}
+
+function addMilestone() {
+  const newM = { id:'m'+Date.now(), sortDate:null, label:'未定', title:'新しいマイルストーン', sub:'', tbd:true };
+  const finalIdx = data.milestones.findIndex(m => m.final);
+  if (finalIdx >= 0) data.milestones.splice(finalIdx, 0, newM);
+  else data.milestones.push(newM);
+  saveLocal(); syncToCloud(); renderMilestones();
+  // 追加後すぐタイトル編集モードに
+  setTimeout(() => inlineEditMilestone(newM.id, 'title'), 50);
+}
+
+function deleteMilestone(id) {
+  if (!confirm('このマイルストーンを削除しますか？')) return;
+  data.milestones = data.milestones.filter(m => m.id !== id);
+  saveLocal(); syncToCloud(); renderMilestones();
 }
 
 function updateOverallProgress() {
