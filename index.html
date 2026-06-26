@@ -394,6 +394,10 @@
   .drag-handle:active { cursor: grabbing; }
   .budget-item-row.dragging { opacity: 0.4; }
   .budget-item-row.drag-over td { background: #dbeafe !important; border-top: 2px solid #3b82f6; }
+  .task-card.dragging { opacity: 0.4; }
+  .task-card.drag-over { border-top: 2px solid var(--gold) !important; }
+  .task-drag-handle { cursor: grab; color: var(--text-muted); font-size: 14px; padding: 0 4px 0 0; flex-shrink: 0; user-select: none; }
+  .task-drag-handle:active { cursor: grabbing; }
   /* 非課税行 */
   .tax-exempt-row td { background: #f0fdfa !important; }
   .tax-exempt-row:hover td { background: #ccfbf1 !important; }
@@ -1839,10 +1843,14 @@ function renderTasks(filter) {
     return;
   }
 
+  // フィルター後のタスクIDリストを保持（並び替えに使用）
+  window._filteredTaskIds = byAssignee.map(t => t.id);
+
   container.innerHTML = byAssignee.map(t => {
     // 完了タスクはコンパクト横長表示
     if (t.status === 'done') {
-      return `<div class="task-card done-compact">
+      return `<div class="task-card done-compact" draggable="true" data-id="${t.id}">
+        <span class="task-drag-handle" title="ドラッグで並び替え">⠿</span>
         <button class="btn-revert-done" onclick="revertDoneTask('${t.id}')" title="押すと未着手に戻す">✓ 完了</button>
         <span class="done-compact-title">${t.title}</span>
         <button class="btn btn-sm btn-danger" style="background:transparent;border-color:#575754;color:#7a7975;font-size:10px;padding:2px 6px;" onclick="deleteTask('${t.id}')">✕</button>
@@ -1853,9 +1861,10 @@ function renderTasks(filter) {
     const depHtml = locked && depTask ? `<span class="task-dep">🔒 「${depTask.title}」完了後</span>` : '';
     const dueFmt = t.due ? t.due.replace(/^(\d{4})-(\d{2})-(\d{2})$/, (_, y,m,d) => `${parseInt(m)}/${parseInt(d)}`) : '日付未定';
     const statusCycle = locked ? '' : `onclick="cycleStatus('${t.id}')" title="クリックでステータス変更"`;
-    return `<div class="task-card${locked?' locked':''}">
+    return `<div class="task-card${locked?' locked':''}" draggable="true" data-id="${t.id}">
       <div style="flex:1;min-width:0;">
         <div class="task-title" style="display:flex;align-items:baseline;gap:6px;">
+          <span class="task-drag-handle" title="ドラッグで並び替え">⠿</span>
           <span>${statusIcon(t.status)}</span>
           <span class="editable-click" onclick="inlineEditText(this,'${t.id}','title')" title="クリックで編集">${t.title}</span>
         </div>
@@ -1877,6 +1886,43 @@ function renderTasks(filter) {
       </div>
     </div>`;
   }).join('');
+  initTaskDrag();
+}
+
+function initTaskDrag() {
+  const container = document.getElementById('task-list');
+  if (!container) return;
+  let dragSrcId = null;
+  const cards = container.querySelectorAll('.task-card[data-id]');
+  cards.forEach(card => {
+    card.addEventListener('dragstart', e => {
+      dragSrcId = card.dataset.id;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      container.querySelectorAll('.task-card').forEach(c => c.classList.remove('drag-over'));
+    });
+    card.addEventListener('dragover', e => {
+      e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+      container.querySelectorAll('.task-card').forEach(c => c.classList.remove('drag-over'));
+      card.classList.add('drag-over');
+    });
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      const destId = card.dataset.id;
+      if (dragSrcId && dragSrcId !== destId) {
+        const srcIdx = data.tasks.findIndex(t => t.id === dragSrcId);
+        const dstIdx = data.tasks.findIndex(t => t.id === destId);
+        if (srcIdx >= 0 && dstIdx >= 0) {
+          const [moved] = data.tasks.splice(srcIdx, 1);
+          data.tasks.splice(dstIdx, 0, moved);
+          saveLocal(); syncToCloud(); renderTasks(currentTaskFilter);
+        }
+      }
+    });
+  });
 }
 
 function statusHtml(s) {
