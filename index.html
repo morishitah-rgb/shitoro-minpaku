@@ -1517,12 +1517,12 @@ function saveLocal() {
 
 function getInitialBudget() {
   return [
-    { id:'b1', name:'消防設備工事費', cat:'消防設備', person:'森下秀之', est:0, order:0, ringi:'未', paid:0, memo:'柳様より6/26見積受領予定' },
-    { id:'b2', name:'エアコン工事費', cat:'エアコン', person:'森下秀之', est:0, order:0, ringi:'未', paid:0, memo:'' },
-    { id:'b3', name:'電子錠　商品・工事費', cat:'電子錠', person:'森下秀之', est:0, order:0, ringi:'未', paid:0, memo:'6/26打合せで商品確定' },
-    { id:'b4', name:'看板塗り替え費', cat:'看板塗り替え', person:'宇田身江子', est:0, order:0, ringi:'未', paid:0, memo:'7/26予定' },
-    { id:'b5', name:'登記費用（表題・保存）', cat:'登記費用', person:'森下秀之', est:0, order:0, ringi:'未', paid:0, memo:'大谷先生・村松司法書士' },
-    { id:'b6', name:'行政書士費用', cat:'行政書士', person:'森下秀之', est:0, order:0, ringi:'未', paid:0, memo:'板尾先生' },
+    { id:'b1', name:'消防設備工事費', cat:'消防設備', person:'森下秀之', est:0, actual:0, ringi:'未', memo:'柳様より6/26見積受領予定' },
+    { id:'b2', name:'エアコン工事費', cat:'エアコン', person:'森下秀之', est:0, actual:0, ringi:'未', memo:'' },
+    { id:'b3', name:'電子錠　商品・工事費', cat:'電子錠', person:'森下秀之', est:0, actual:0, ringi:'未', memo:'6/26打合せで商品確定' },
+    { id:'b4', name:'看板塗り替え費', cat:'看板塗り替え', person:'宇田身江子', est:0, actual:0, ringi:'未', memo:'7/26予定' },
+    { id:'b5', name:'登記費用（表題・保存）', cat:'登記費用', person:'森下秀之', est:0, actual:0, ringi:'未', memo:'大谷先生・村松司法書士' },
+    { id:'b6', name:'行政書士費用', cat:'行政書士', person:'森下秀之', est:0, actual:0, ringi:'未', memo:'板尾先生' },
   ];
 }
 
@@ -2574,9 +2574,11 @@ function handleImport(e) {
 }
 
 function resetData() {
-  if (!confirm('すべてのデータをリセットしますか？\n（初期タスクに戻ります）')) return;
-  data = { tasks: JSON.parse(JSON.stringify(INITIAL_TASKS)), supplies: [], budget: getInitialBudget() };
-  saveLocal(); syncToCloud(); renderAll(); alert('リセットしました');
+  const pin = prompt('⚠️ リセットは取り消せません。\n社員PINを入力して確認してください：');
+  if (pin !== getBudgetPin()) { alert('PINが違います。リセットを中止しました。'); return; }
+  if (!confirm('【最終確認】タスク・備品・予算のデータがすべて初期状態に戻ります。\nクラウドデータも上書きされます。本当によいですか？')) return;
+  data = { tasks: JSON.parse(JSON.stringify(INITIAL_TASKS)), supplies: [], budget: getInitialBudget(), docs: data.docs || [] };
+  saveLocal(); syncToCloud(); renderAll(); alert('リセットしました（資料データは保持されています）');
 }
 
 // ===== MODAL =====
