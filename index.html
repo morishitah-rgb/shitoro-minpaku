@@ -616,6 +616,31 @@
 
   /* hidden file input */
   #attach-file-input { display: none; }
+
+  /* ===== SYNC INDICATOR ===== */
+  #sync-indicator {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; color: rgba(255,255,255,0.75); font-weight: 500;
+    background: rgba(255,255,255,0.12); border-radius: 20px;
+    padding: 3px 10px; margin-top: 4px; transition: all 0.3s;
+  }
+  #sync-indicator .si-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  #sync-indicator.syncing .si-dot { background: #60a5fa; animation: pulse-dot 1s infinite; }
+  #sync-indicator.sending .si-dot { background: #fbbf24; animation: pulse-dot 0.6s infinite; }
+  #sync-indicator.ok     .si-dot { background: #34d399; }
+  #sync-indicator.offline .si-dot { background: #94a3b8; }
+  #sync-indicator.error  .si-dot { background: #f87171; }
+  @keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+  .sync-toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #1a2744; color: white; padding: 10px 20px; border-radius: 30px;
+    font-size: 13px; font-weight: 600; z-index: 9998; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    animation: toast-in 0.3s ease; pointer-events: none;
+  }
+  @keyframes toast-in { from{opacity:0;transform:translateX(-50%) translateY(10px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
 </style>
 </head>
 <body>
@@ -638,6 +663,7 @@
     <div class="header-meta">
       <div class="goal-badge">🎯 10/1 開業</div>
       <div class="header-date" id="today-date"></div>
+      <div id="sync-indicator" class="offline"><div class="si-dot"></div><span id="si-text">オフライン</span></div>
     </div>
   </div>
   <nav id="main-nav">
@@ -1524,42 +1550,83 @@ function getInitialBudget() {
 }
 
 // ===== CLOUD SYNC =====
+let _lastKnownTs = 0;
+
+function setSyncIndicator(state, text) {
+  const el = document.getElementById('sync-indicator');
+  const tx = document.getElementById('si-text');
+  if (!el || !tx) return;
+  el.className = 'offline'; // reset
+  el.classList.add(state);
+  tx.textContent = text;
+}
+
+function showSyncToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'sync-toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
 async function syncFromCloud() {
-  if (!API_KEY || !BIN_ID) { updateSyncStatus('ローカルモード（設定タブでクラウド同期を設定できます）'); return; }
+  if (!API_KEY || !BIN_ID) { setSyncIndicator('offline','オフライン'); updateSyncStatus('ローカルモード（設定タブでクラウド同期を設定できます）'); return; }
+  setSyncIndicator('syncing','受信中...');
   try {
     const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
       headers: { 'X-Master-Key': API_KEY }
     });
     if (res.ok) {
       const json = await res.json();
-      data = json.record;
-      saveLocal();
+      const remote = json.record;
+      const remoteTs = remote._t || 0;
+      if (remoteTs > _lastKnownTs) {
+        const isFirst = _lastKnownTs === 0;
+        _lastKnownTs = remoteTs;
+        data = remote;
+        saveLocal();
+        renderAll();
+        if (!isFirst) showSyncToast('🔄 他のユーザーの変更を反映しました');
+      }
+      _lastKnownTs = Math.max(_lastKnownTs, remoteTs);
+      setSyncIndicator('ok','同期済 ✓');
       updateSyncStatus('クラウド同期済 ✓');
     } else {
+      setSyncIndicator('error','同期エラー');
       updateSyncStatus('同期エラー（ローカルデータを表示中）');
     }
   } catch(e) {
+    setSyncIndicator('offline','オフライン');
     updateSyncStatus('ローカルモード');
   }
-  renderAll();
 }
 
 async function syncToCloud() {
   if (!API_KEY || !BIN_ID) return;
+  data._t = Date.now();
+  _lastKnownTs = data._t;
   saveLocal();
+  setSyncIndicator('sending','送信中...');
   try {
     await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
       method: 'PUT',
       headers: { 'X-Master-Key': API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
+    setSyncIndicator('ok','保存済 ✓');
     updateSyncStatus('クラウド保存済 ✓ ' + new Date().toLocaleTimeString('ja-JP'));
-  } catch(e) {}
+  } catch(e) {
+    setSyncIndicator('error','保存失敗');
+  }
 }
 
 function updateSyncStatus(msg) {
   const el = document.getElementById('sync-status');
   if (el) el.textContent = msg;
+}
+
+function startPolling() {
+  if (!API_KEY || !BIN_ID) return;
+  setInterval(syncFromCloud, 5000);
 }
 
 // ===== RENDER =====
@@ -2938,7 +3005,7 @@ document.getElementById('today-date').textContent = new Date().toLocaleDateStrin
 loadLocal();
 loadSettingsInputs();
 renderAll();
-syncFromCloud();
+syncFromCloud().then(() => startPolling());
 </script>
 </body>
 </html>
