@@ -862,11 +862,11 @@
 <!-- ⑥ 物件情報 -->
 <div class="tab-content" id="tab-property">
   <div class="section-title">🏠 物件情報</div>
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+  <div class="property-grid">
     <div class="card">
       <div class="card-title">📍 基本情報</div>
       <div class="property-item"><span class="property-label">物件名</span><span class="property-value">志都呂モデルハウス</span></div>
-      <div class="property-item"><span class="property-label">所在地</span><span class="property-value">浜松市中央区志都呂</span></div>
+      <div class="property-item"><span class="property-label">所在地</span><span class="property-value">浜松市中央区志都呂2丁目1032番3</span></div>
       <div class="property-item"><span class="property-label">形態</span><span class="property-value">戸建て（2階建て）</span></div>
       <div class="property-item"><span class="property-label">民泊種別</span><span class="property-value">家主不在型</span></div>
       <div class="property-item"><span class="property-label">管理業者</span><span class="property-value">インバウンドホールディングス</span></div>
@@ -1361,14 +1361,44 @@
         </select>
       </div>
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">予算金額（税込）<button type="button" class="attach-ocr-btn" onclick="openAttachForModal('budget','est')" title="見積書を撮影して自動入力">📎 見積添付</button></label>
-        <input type="number" class="form-input" id="budget-est-input" placeholder="0">
+    <div class="form-group" style="margin-bottom:8px;">
+      <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="budget-taxexempt-input" onchange="onTaxExemptChange()" style="width:16px;height:16px;">
+        <span>非課税（登記・印紙代など、消費税0円）</span>
+      </label>
+    </div>
+    <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;">
+      <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:8px;">📊 予算金額（税抜きまたは税込みのどちらかを入力）</div>
+      <div class="form-row" style="margin-bottom:6px;">
+        <div class="form-group">
+          <label class="form-label">税抜き金額</label>
+          <input type="number" class="form-input" id="budget-est-ex-input" placeholder="0" oninput="calcTaxFrom('est','ex')">
+        </div>
+        <div class="form-group">
+          <label class="form-label">消費税（自動計算）</label>
+          <input type="number" class="form-input" id="budget-est-tax-input" placeholder="—" readonly style="background:#f1f5f9;color:var(--text-muted);">
+        </div>
+        <div class="form-group">
+          <label class="form-label">税込み金額 <button type="button" class="attach-ocr-btn" onclick="openAttachForModal('budget','est')" title="見積書を添付して自動入力">📎 見積添付</button></label>
+          <input type="number" class="form-input" id="budget-est-input" placeholder="0" oninput="calcTaxFrom('est','in')">
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">実績金額（税込）<button type="button" class="attach-ocr-btn" onclick="openAttachForModal('budget','actual')" title="レシートを撮影して自動入力">📷 レシート</button></label>
-        <input type="number" class="form-input" id="budget-actual-input" placeholder="0">
+    </div>
+    <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;">
+      <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:8px;">📊 実績金額（税抜きまたは税込みのどちらかを入力）</div>
+      <div class="form-row" style="margin-bottom:6px;">
+        <div class="form-group">
+          <label class="form-label">税抜き金額</label>
+          <input type="number" class="form-input" id="budget-actual-ex-input" placeholder="0" oninput="calcTaxFrom('actual','ex')">
+        </div>
+        <div class="form-group">
+          <label class="form-label">消費税（自動計算）</label>
+          <input type="number" class="form-input" id="budget-actual-tax-input" placeholder="—" readonly style="background:#f1f5f9;color:var(--text-muted);">
+        </div>
+        <div class="form-group">
+          <label class="form-label">税込み金額 <button type="button" class="attach-ocr-btn" onclick="openAttachForModal('budget','actual')" title="レシートを添付して自動入力">📷 レシート</button></label>
+          <input type="number" class="form-input" id="budget-actual-input" placeholder="0" oninput="calcTaxFrom('actual','in')">
+        </div>
       </div>
     </div>
     <div class="form-row">
@@ -1409,7 +1439,7 @@
     </div>
   </div>
 </div>
-<input type="file" id="attach-file-input" accept="image/*">
+<input type="file" id="attach-file-input" accept="image/*,application/pdf">
 
 <script>
 // ===== DATA =====
@@ -1521,7 +1551,7 @@ function getInitialBudget() {
     { id:'b2', name:'エアコン工事費', cat:'エアコン', person:'森下秀之', est:0, actual:0, ringi:'未', memo:'' },
     { id:'b3', name:'電子錠　商品・工事費', cat:'電子錠', person:'森下秀之', est:0, actual:0, ringi:'未', memo:'6/26打合せで商品確定' },
     { id:'b4', name:'看板塗り替え費', cat:'看板塗り替え', person:'宇田身江子', est:0, actual:0, ringi:'未', memo:'7/26予定' },
-    { id:'b5', name:'登記費用（表題・保存）', cat:'登記費用', person:'森下秀之', est:0, actual:0, ringi:'未', memo:'大谷先生・村松司法書士' },
+    { id:'b5', name:'登記費用（表題・保存）', cat:'登記費用', person:'森下秀之', est:0, actual:0, tax_exempt:true, ringi:'未', memo:'大谷先生・村松司法書士' },
     { id:'b6', name:'行政書士費用', cat:'行政書士', person:'森下秀之', est:0, actual:0, ringi:'未', memo:'板尾先生' },
   ];
 }
@@ -2170,13 +2200,20 @@ function renderBudget() {
     const diffHtml = (be>0&&ba>0) ? `<span class="${bd>=0?'diff-ok':'diff-over'}">${bd>=0?'-':'+'}¥${Math.abs(bd).toLocaleString()}</span>` : '<span style="color:#94a3b8;">—</span>';
     const attachKey = 'attach_b_' + b.id;
     const hasAttach = !!localStorage.getItem(STORAGE_KEY + '_' + attachKey);
+    // 税計算
+    const taxSubHtml = (amt) => {
+      if (!amt) return '';
+      if (b.tax_exempt) return '<div style="font-size:10px;color:#0891b2;">非課税</div>';
+      const ex = Math.round(amt / 1.1), tx = amt - ex;
+      return `<div style="font-size:10px;color:#64748b;">税抜¥${ex.toLocaleString()} / 消費税¥${tx.toLocaleString()}</div>`;
+    };
     return `<tr>
     <td style="font-weight:600;"><span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','name','text')">${b.name}</span></td>
     <td><span class="editable-click cat-badge" style="${catBadgeStyle(b.cat)}" onclick="inlineEditBudget(this,'${b.id}','cat','select-cat')">${b.cat}</span></td>
     <td onclick="inlineEditMemberSelect(this,data.budget,'${b.id}','person',()=>renderBudget())">${personChipHtml(b.person)}</td>
-    <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','est','number')">${b.est ? '¥'+Number(b.est).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
+    <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','est','number')">${b.est ? '¥'+Number(b.est).toLocaleString()+'<span style="font-size:10px;font-weight:400;color:#94a3b8;">税込</span>' : '—'}</span>${taxSubHtml(be)}` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
     <td><span class="editable-click" style="background:${ringiColor[b.ringi]||'#f1f5f9'};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;" onclick="inlineEditBudget(this,'${b.id}','ringi','select-ringi')">${b.ringi}</span></td>
-    <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','actual','number')">${b.actual ? '¥'+Number(b.actual).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
+    <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditBudget(this,'${b.id}','actual','number')">${b.actual ? '¥'+Number(b.actual).toLocaleString()+'<span style="font-size:10px;font-weight:400;color:#94a3b8;">税込</span>' : '—'}</span>${taxSubHtml(ba)}` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
     <td class="amount">${budgetUnlocked ? diffHtml : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
     <td><button class="attach-btn ${hasAttach ? 'has-attach' : ''}" onclick="openAttach('budget','${b.id}')" title="見積・領収書を添付">${hasAttach ? '📎✓' : '📎'}</button></td>
     <td><span class="editable-click" style="font-size:12px;color:var(--text-muted);" onclick="inlineEditBudget(this,'${b.id}','memo','text')">${b.memo || '—'}</span></td>
@@ -2297,6 +2334,37 @@ function deleteSupply(id) {
   saveLocal(); syncToCloud(); renderSupplies(currentSupplyFilter||'all');
 }
 
+function calcTaxFrom(field, source) {
+  const isExempt = document.getElementById('budget-taxexempt-input').checked;
+  const exInput = document.getElementById(`budget-${field}-ex-input`);
+  const taxInput = document.getElementById(`budget-${field}-tax-input`);
+  const inInput = document.getElementById(`budget-${field}-input`);
+  if (!exInput) return;
+  if (isExempt) {
+    taxInput.value = 0;
+    if (source === 'ex') inInput.value = exInput.value || '';
+    else exInput.value = inInput.value || '';
+    return;
+  }
+  if (source === 'ex') {
+    const ex = parseFloat(exInput.value) || 0;
+    const tax = ex ? Math.round(ex * 0.1) : 0;
+    taxInput.value = tax || '';
+    inInput.value = ex ? (ex + tax) : '';
+  } else {
+    const inc = parseFloat(inInput.value) || 0;
+    const ex = inc ? Math.round(inc / 1.1) : 0;
+    const tax = inc ? (inc - ex) : 0;
+    exInput.value = ex || '';
+    taxInput.value = tax || '';
+  }
+}
+
+function onTaxExemptChange() {
+  calcTaxFrom('est', 'in');
+  calcTaxFrom('actual', 'in');
+}
+
 function saveBudget() {
   const id = document.getElementById('budget-edit-id').value;
   const name = document.getElementById('budget-name-input').value.trim();
@@ -2307,6 +2375,7 @@ function saveBudget() {
     person: document.getElementById('budget-person-input').value,
     est: document.getElementById('budget-est-input').value,
     actual: document.getElementById('budget-actual-input').value,
+    tax_exempt: document.getElementById('budget-taxexempt-input').checked,
     ringi: document.getElementById('budget-ringi-input').value,
     memo: document.getElementById('budget-memo-input').value,
   };
@@ -2322,10 +2391,14 @@ function editBudget(id) {
   document.getElementById('budget-name-input').value = b.name;
   document.getElementById('budget-cat-input').value = b.cat;
   document.getElementById('budget-person-input').value = b.person || '';
+  document.getElementById('budget-taxexempt-input').checked = !!b.tax_exempt;
   document.getElementById('budget-est-input').value = b.est || '';
   document.getElementById('budget-actual-input').value = b.actual || '';
   document.getElementById('budget-ringi-input').value = b.ringi;
   document.getElementById('budget-memo-input').value = b.memo || '';
+  // 税計算フィールドを復元
+  calcTaxFrom('est', 'in');
+  calcTaxFrom('actual', 'in');
   openModal('budget-modal');
 }
 
@@ -2431,7 +2504,9 @@ function openAttachForModal(type, field) {
     : (field === 'est' ? 'supply-price-input' : 'supply-actual-input');
   _ocrCtx = { type, id: null, field, inputId };
   const input = document.getElementById('attach-file-input');
-  input.setAttribute('capture', 'environment');
+  // スマホのみカメラ起動対応、PCはファイル選択のみ
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) input.setAttribute('capture', 'environment');
+  else input.removeAttribute('capture');
   input.onchange = _handleAttachFile;
   input.value = '';
   input.click();
@@ -2443,24 +2518,34 @@ function _handleAttachFile(e) {
   const reader = new FileReader();
   reader.onload = ev => {
     const b64 = ev.target.result;
-    // 添付画像をlocalStorageに保存（行ボタンの場合はIDが必要）
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    // 添付ファイルをlocalStorageに保存（行ボタンの場合はIDが必要）
     if (_ocrCtx.id) {
       const key = STORAGE_KEY + '_attach_' + _ocrCtx.type[0] + '_' + _ocrCtx.id;
       try { localStorage.setItem(key, b64); } catch(err) { console.warn('添付保存失敗:', err); }
     }
     // OCR確認ダイアログを表示
-    document.getElementById('ocr-preview-img').src = b64;
+    const previewImg = document.getElementById('ocr-preview-img');
+    if (isPdf) {
+      previewImg.src = '';
+      previewImg.style.display = 'none';
+      previewImg.insertAdjacentHTML('afterend', `<div id="ocr-pdf-icon" style="font-size:48px;text-align:center;padding:12px;">📄<div style="font-size:13px;margin-top:4px;color:var(--navy);">${file.name}</div></div>`);
+    } else {
+      previewImg.src = b64;
+      previewImg.style.display = '';
+      document.getElementById('ocr-pdf-icon')?.remove();
+    }
     document.getElementById('ocr-amount-input').value = '';
     document.getElementById('ocr-hint-text').textContent = '金額を読み取り中...';
     document.getElementById('ocr-dialog').classList.add('open');
-    _runOcr(b64);
+    _runOcr(b64, isPdf);
     // 再レンダーして添付マークを更新
     if (_ocrCtx.id) { _ocrCtx.type === 'budget' ? renderBudget() : renderSupplies(currentSupplyFilter||'all'); }
   };
   reader.readAsDataURL(file);
 }
 
-function _runOcr(b64) {
+function _runOcr(b64, isPdf) {
   const hint = document.getElementById('ocr-hint-text');
   const amtInput = document.getElementById('ocr-amount-input');
   // base64からBlobを作りFormDataでOCR.Spaceへ送信
@@ -2472,6 +2557,7 @@ function _runOcr(b64) {
       fd.append('base64Image', b64);
       fd.append('language', 'jpn');
       fd.append('isOverlayRequired', 'false');
+      if (isPdf) fd.append('filetype', 'PDF');
       return fd;
     })()
   })
@@ -2603,8 +2689,11 @@ function openModal(id) {
   }
   if (id === 'budget-modal') {
     document.getElementById('budget-edit-id').value = '';
-    ['budget-name-input','budget-est-input','budget-actual-input','budget-memo-input'].forEach(x => { const el = document.getElementById(x); if(el) el.value = ''; });
+    ['budget-name-input','budget-est-input','budget-est-ex-input','budget-est-tax-input',
+     'budget-actual-input','budget-actual-ex-input','budget-actual-tax-input','budget-memo-input']
+      .forEach(x => { const el = document.getElementById(x); if(el) el.value = ''; });
     document.getElementById('budget-ringi-input').value = '未';
+    document.getElementById('budget-taxexempt-input').checked = false;
   }
   document.getElementById(id).classList.add('open');
 }
