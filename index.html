@@ -303,6 +303,24 @@
   }
   .task-card:hover { border-color: var(--navy); box-shadow: var(--shadow); }
   .task-card.locked { opacity: 0.65; background: #fafafa; }
+  .task-card.done-compact {
+    background: #3c3c3a; border-color: #575754;
+    padding: 5px 10px 5px 8px; margin-bottom: 5px;
+    display: flex; align-items: center; gap: 8px;
+    border-radius: 8px; min-height: 32px;
+    grid-template-columns: unset;
+  }
+  .task-card.done-compact:hover { border-color: #7a7975; box-shadow: none; }
+  .done-compact-title { font-size: 12px; color: #8a8a86; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 400; }
+  .btn-revert-done {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10px; font-weight: 600; padding: 3px 9px;
+    border-radius: 999px; white-space: nowrap;
+    background: #1e4010; color: #a8d080;
+    cursor: pointer; border: none; font-family: inherit;
+    transition: background 0.12s; flex-shrink: 0;
+  }
+  .btn-revert-done:hover { background: #2d5a1a; }
   .task-title { font-weight: 700; font-size: 14px; color: var(--navy); margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
   .task-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
   .task-assignee {
@@ -1822,6 +1840,14 @@ function renderTasks(filter) {
   }
 
   container.innerHTML = byAssignee.map(t => {
+    // 完了タスクはコンパクト横長表示
+    if (t.status === 'done') {
+      return `<div class="task-card done-compact">
+        <button class="btn-revert-done" onclick="revertDoneTask('${t.id}')" title="押すと未着手に戻す">✓ 完了</button>
+        <span class="done-compact-title">${t.title}</span>
+        <button class="btn btn-sm btn-danger" style="background:transparent;border-color:#575754;color:#7a7975;font-size:10px;padding:2px 6px;" onclick="deleteTask('${t.id}')">✕</button>
+      </div>`;
+    }
     const locked = t.dep && !doneIds.has(t.dep);
     const depTask = t.dep ? tasks.find(x => x.id === t.dep) : null;
     const depHtml = locked && depTask ? `<span class="task-dep">🔒 「${depTask.title}」完了後</span>` : '';
@@ -1904,6 +1930,13 @@ function cycleStatus(taskId) {
   const cycle = ['todo', 'doing', 'done', 'hold'];
   t.status = cycle[(cycle.indexOf(t.status) + 1) % cycle.length];
   saveLocal(); syncToCloud(); renderAll();
+}
+
+function revertDoneTask(taskId) {
+  const t = data.tasks.find(x => x.id === taskId);
+  if (!t) return;
+  t.status = 'todo';
+  saveLocal(); syncToCloud(); renderTasks(currentTaskFilter);
 }
 
 function showMemberDropdown(anchorEl, currentVal, onSelect, onClose) {
