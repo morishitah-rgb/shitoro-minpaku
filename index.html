@@ -1498,6 +1498,13 @@ const INITIAL_TASKS = [
   { id:'t30', title:'消防法令適合通知書交付申請', cat:'消防', status:'todo', main:'中山亘', sub:'森下秀之', due:'2026-07-31', dep:'t5', note:'消防検査立合後に中山先生が西消防署へ申請。民泊事業届書類（板尾先生作成）も必要。' },
 ];
 
+const _DOCS_BASE = 'https://morishitah-rgb.github.io/shitoro-minpaku/docs/';
+const PRESET_DOCS = [
+  { id:'dgomi1', name:'【候補①】ゴミストッカーAP3型', cat:'その他', url: _DOCS_BASE + encodeURIComponent('【候補①】ゴミストッカーAP3型.pdf'), by:'森下秀之' },
+  { id:'dgomi2', name:'【候補②】ゴミストッカーPS型スリム型', cat:'その他', url: _DOCS_BASE + encodeURIComponent('【候補②】ゴミストッカーPS型スリム型.pdf'), by:'森下秀之' },
+  { id:'dac1',   name:'エアコン取付見積書（エネジン）', cat:'見積・契約', url: _DOCS_BASE + encodeURIComponent('エアコン取付見積書（エネジン）.pdf'), by:'森下秀之' },
+];
+
 const INITIAL_MILESTONES = [
   { id:'m1',  sortDate:'2026-06-26', label:'6/26',   title:'消防設備　見積受領（柳様）',          sub:'稟議申請へ' },
   { id:'m2',  sortDate:'2026-06-30', label:'6月末',  title:'表題登記・保存登記　完了',            sub:'大谷先生・村松司法書士' },
@@ -1542,6 +1549,14 @@ function loadLocal() {
     data.milestones = INITIAL_MILESTONES.map(m => ({...m}));
     saveLocal();
   }
+  // プリセットdocsが未追加なら注入
+  if (!data.docs) data.docs = [];
+  let docsChanged = false;
+  PRESET_DOCS.forEach(pd => {
+    if (!data.docs.find(d => d.id === pd.id)) { data.docs.push(pd); docsChanged = true; }
+  });
+  if (docsChanged) saveLocal();
+
   // WiFi工事マイルストーンが既存データに未追加なら追加
   if (!data.milestones.find(m => m.id === 'm-wifi')) {
     const finalIdx = data.milestones.findIndex(m => m.final);
