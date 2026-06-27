@@ -410,6 +410,15 @@
   .doc-card.drop-target { cursor: pointer; }
   .doc-card.drop-target:hover, .doc-card.drop-target.drag-active { border-color: var(--gold); background: var(--gold-pale); }
   .doc-card.drop-target .doc-tag { background: #f0fdf4; color: #15803d; border-color: #86efac; }
+  .doc-card.doc-add-slot { border-style: dashed; opacity: 0.55; cursor: pointer; transition: all 0.15s; }
+  .doc-card.doc-add-slot:hover, .doc-card.doc-add-slot.drag-active { opacity: 1; border-color: var(--gold); background: var(--gold-pale); }
+  .doc-cat-header { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .doc-cat-rename { background: none; border: none; cursor: pointer; font-size: 13px; color: #9ca3af; padding: 0 2px; }
+  .doc-cat-rename:hover { color: var(--navy); }
+  .doc-cat-add-btn { margin-left: auto; background: #f0f9ff; border: 1.5px solid #bae6fd; color: #0369a1; border-radius: 6px; padding: 3px 10px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .doc-cat-add-btn:hover { background: #e0f2fe; }
+  .doc-new-folder-btn { display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: white; border: 1.5px dashed var(--gold); color: var(--gold); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 16px; }
+  .doc-new-folder-btn:hover { background: var(--gold-pale); }
   /* 非課税行 */
   .tax-exempt-row td { background: #f0fdfa !important; }
   .tax-exempt-row:hover td { background: #ccfbf1 !important; }
@@ -967,6 +976,13 @@
         <div class="doc-name">平面・立面 消防用設備（JWCAD）</div>
         <div class="doc-tag">柳様作成 / ローカル保管</div>
       </div>
+      <div class="doc-card doc-add-slot" onclick="addDocToCat('消防設備')"
+           ondragover="event.preventDefault();this.classList.add('drag-active')"
+           ondragleave="this.classList.remove('drag-active')"
+           ondrop="_dropToCat(event,'消防設備')">
+        <div class="doc-icon">＋</div><div class="doc-name" style="font-size:11px;">ここに追加</div>
+        <div class="doc-tag" style="font-size:10px;">ドロップ / クリック</div>
+      </div>
     </div>
   </div>
   <div class="card" style="margin-bottom:16px;">
@@ -981,6 +997,13 @@
       <a class="doc-card" href="plan-material.pdf" target="_blank" style="text-decoration:none;cursor:pointer;"><div class="doc-icon">🎨</div><div class="doc-name">マテリアル</div><div class="doc-tag" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;">PDF → 開く</div></a>
       <a class="doc-card" href="plan-finish-1.pdf" target="_blank" style="text-decoration:none;cursor:pointer;"><div class="doc-icon">📋</div><div class="doc-name">仕上げ表①</div><div class="doc-tag" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;">PDF → 開く</div></a>
       <a class="doc-card" href="plan-finish-2.pdf" target="_blank" style="text-decoration:none;cursor:pointer;"><div class="doc-icon">📋</div><div class="doc-name">仕上げ表②</div><div class="doc-tag" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;">PDF → 開く</div></a>
+      <div class="doc-card doc-add-slot" onclick="addDocToCat('設計図書')"
+           ondragover="event.preventDefault();this.classList.add('drag-active')"
+           ondragleave="this.classList.remove('drag-active')"
+           ondrop="_dropToCat(event,'設計図書')">
+        <div class="doc-icon">＋</div><div class="doc-name" style="font-size:11px;">ここに追加</div>
+        <div class="doc-tag" style="font-size:10px;">ドロップ / クリック</div>
+      </div>
     </div>
   </div>
   <div class="card" style="margin-bottom:16px;">
@@ -992,6 +1015,13 @@
       <a class="doc-card" href="cert-longterm-quality.pdf" target="_blank" style="text-decoration:none;cursor:pointer;"><div class="doc-icon">🏅</div><div class="doc-name">長期優良住宅認定通知書</div><div class="doc-tag" style="background:#f0fdf4;color:#15803d;border-color:#86efac;">PDF → 開く</div></a>
       <a class="doc-card" href="cert-compliance-eval.pdf" target="_blank" style="text-decoration:none;cursor:pointer;"><div class="doc-icon">📄</div><div class="doc-name">適合証・評価書</div><div class="doc-tag" style="background:#f0fdf4;color:#15803d;border-color:#86efac;">PDF → 開く</div></a>
       <a class="doc-card" href="cert-longterm-application.pdf" target="_blank" style="text-decoration:none;cursor:pointer;"><div class="doc-icon">📄</div><div class="doc-name">長期優良申請書</div><div class="doc-tag" style="background:#f0fdf4;color:#15803d;border-color:#86efac;">PDF → 開く（95p）</div></a>
+      <div class="doc-card doc-add-slot" onclick="addDocToCat('行政・認定')"
+           ondragover="event.preventDefault();this.classList.add('drag-active')"
+           ondragleave="this.classList.remove('drag-active')"
+           ondrop="_dropToCat(event,'行政・認定')">
+        <div class="doc-icon">＋</div><div class="doc-name" style="font-size:11px;">ここに追加</div>
+        <div class="doc-tag" style="font-size:10px;">ドロップ / クリック</div>
+      </div>
     </div>
   </div>
   <div class="card">
@@ -1008,6 +1038,13 @@
       </div>
       <input type="file" id="doc-ic-input" accept=".pdf,image/*" style="display:none"
              onchange="dropDocFileFromInput(this, 'ic1', 'ICコーディネートプラン', 'インテリア')">
+      <div class="doc-card doc-add-slot" onclick="addDocToCat('インテリア')"
+           ondragover="event.preventDefault();this.classList.add('drag-active')"
+           ondragleave="this.classList.remove('drag-active')"
+           ondrop="_dropToCat(event,'インテリア')">
+        <div class="doc-icon">＋</div><div class="doc-name" style="font-size:11px;">ここに追加</div>
+        <div class="doc-tag" style="font-size:10px;">ドロップ / クリック</div>
+      </div>
     </div>
   </div>
 
@@ -1044,6 +1081,13 @@
         <div class="doc-name">住宅宿泊事業を始める<br>事業者へ（国交省）</div>
         <div class="doc-tag">PDF</div>
       </a>
+      <div class="doc-card doc-add-slot" onclick="addDocToCat('行政手続き書類')"
+           ondragover="event.preventDefault();this.classList.add('drag-active')"
+           ondragleave="this.classList.remove('drag-active')"
+           ondrop="_dropToCat(event,'行政手続き書類')">
+        <div class="doc-icon">＋</div><div class="doc-name" style="font-size:11px;">ここに追加</div>
+        <div class="doc-tag" style="font-size:10px;">ドロップ / クリック</div>
+      </div>
     </div>
   </div>
 </div>
@@ -1571,6 +1615,9 @@ function loadLocal() {
     data.milestones = INITIAL_MILESTONES.map(m => ({...m}));
     saveLocal();
   }
+  // docCats初期化
+  if (!data.docCats) data.docCats = [];
+
   // プリセットdocsが未追加なら注入
   if (!data.docs) data.docs = [];
   let docsChanged = false;
@@ -2759,20 +2806,26 @@ function renderDocs() {
   const sec = document.getElementById('user-docs-section');
   if (!sec) return;
   const docs = data.docs || [];
-  if (!docs.length) { sec.innerHTML = ''; return; }
-  // カテゴリ別にグループ化
+  // カテゴリ別にグループ化（空カスタムカテゴリも含む）
   const groups = {};
   docs.forEach(d => { if (!groups[d.cat]) groups[d.cat] = []; groups[d.cat].push(d); });
+  (data.docCats || []).forEach(c => { if (!groups[c]) groups[c] = []; });
+
+  const catEsc = c => c.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+
   sec.innerHTML = Object.entries(groups).map(([cat, items]) => `
     <div class="card" style="margin-bottom:16px;">
-      <div class="card-title">
-        ${DOC_CAT_ICONS[cat]||'📄'} ${cat}
-        <span class="cat-badge" style="background:${DOC_CAT_COLORS[cat]||'#f8fafc'};margin-left:8px;font-size:10px;">追加済</span>
+      <div class="card-title doc-cat-header">
+        <span>${DOC_CAT_ICONS[cat]||'📁'} ${cat}</span>
+        <button class="doc-cat-rename" onclick="renameDocCat('${catEsc(cat)}')" title="カテゴリ名を変更">✏️</button>
+        <button class="doc-cat-add-btn" onclick="addDocToCat('${catEsc(cat)}')">＋ 追加</button>
       </div>
-      <div class="docs-grid">
+      <div class="docs-grid"
+           ondragover="event.preventDefault()"
+           ondrop="_dropToCat(event,'${catEsc(cat)}')">
         ${items.map(d => `
           <div class="doc-card doc-user-card" style="position:relative;">
-            <button class="doc-delete-btn" onclick="deleteDoc('${d.id}')" title="削除">✕</button>
+            <button class="doc-delete-btn" onclick="deleteDocPinConfirm('${d.id}')" title="削除（PIN必要）">✕</button>
             ${d.localKey
               ? `<div class="doc-icon" style="cursor:pointer;" onclick="openDocLocal('${d.id}')">${DOC_CAT_ICONS[d.cat]||'📄'}</div>
                  <div class="doc-name">${d.name}</div>
@@ -2788,8 +2841,15 @@ function renderDocs() {
                  <div class="doc-tag">URL未設定</div>`}
             ${d.by ? `<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">by ${d.by}</div>` : ''}
           </div>`).join('')}
+        <div class="doc-card doc-add-slot" onclick="addDocToCat('${catEsc(cat)}')">
+          <div class="doc-icon">＋</div>
+          <div class="doc-name" style="font-size:11px;">ここに追加</div>
+          <div class="doc-tag" style="font-size:10px;">ドロップ / クリック</div>
+        </div>
       </div>
     </div>`).join('');
+
+  sec.innerHTML += `<button class="doc-new-folder-btn" onclick="addNewDocCat()">📁 フォルダを追加</button>`;
 }
 
 function openDocForm() {
@@ -2815,11 +2875,50 @@ function saveDoc() {
   saveLocal(); syncToCloud(); renderDocs(); closeDocForm();
 }
 function deleteDoc(id) {
-  if (!confirm('この資料を削除しますか？')) return;
   const doc = (data.docs || []).find(d => d.id === id);
   if (doc?.localKey) localStorage.removeItem(doc.localKey);
   data.docs = (data.docs || []).filter(d => d.id !== id);
   saveLocal(); syncToCloud(); renderDocs();
+}
+
+function deleteDocPinConfirm(id) {
+  const pin = prompt('削除にはPINが必要です：');
+  if (pin === null) return;
+  if (pin !== '8910') { alert('PINが違います'); return; }
+  deleteDoc(id);
+}
+
+function renameDocCat(oldName) {
+  const newName = prompt('新しいカテゴリ名：', oldName)?.trim();
+  if (!newName || newName === oldName) return;
+  (data.docs || []).forEach(d => { if (d.cat === oldName) d.cat = newName; });
+  if (!data.docCats) data.docCats = [];
+  const idx = data.docCats.indexOf(oldName);
+  if (idx >= 0) data.docCats[idx] = newName;
+  else data.docCats.push(newName);
+  saveLocal(); syncToCloud(); renderDocs();
+}
+
+function addNewDocCat() {
+  const name = prompt('新しいフォルダ名：')?.trim();
+  if (!name) return;
+  if (!data.docCats) data.docCats = [];
+  if (!data.docCats.includes(name)) data.docCats.push(name);
+  saveLocal(); syncToCloud(); renderDocs();
+}
+
+let _docAddCatCtx = null;
+function addDocToCat(cat) {
+  _docAddCatCtx = cat;
+  const input = document.getElementById('doc-file-input');
+  input.value = ''; input.click();
+}
+
+function _dropToCat(e, cat) {
+  e.preventDefault(); e.stopPropagation();
+  const file = e.dataTransfer?.files?.[0];
+  if (!file) return;
+  _processDocFile(file, null, null, cat);
 }
 
 function dropDocFile(e, fixedId, fixedName, fixedCat) {
@@ -2835,7 +2934,9 @@ function dropDocFileFromInput(input, fixedId, fixedName, fixedCat) {
   const file = input.files?.[0];
   input.value = '';
   if (!file) return;
-  _processDocFile(file, fixedId, fixedName, fixedCat);
+  const cat = fixedCat || _docAddCatCtx;
+  _docAddCatCtx = null;
+  _processDocFile(file, fixedId, fixedName, cat);
 }
 
 function _processDocFile(file, fixedId, fixedName, fixedCat) {
@@ -2848,7 +2949,7 @@ function _processDocFile(file, fixedId, fixedName, fixedCat) {
     const b64 = ev.target.result;
     if (!fixedId) {
       // 汎用ドロップ：名前・カテゴリ確認ダイアログを表示
-      _showDocSaveDialog(b64, file.name.replace(/\.[^.]+$/, ''));
+      _showDocSaveDialog(b64, file.name.replace(/\.[^.]+$/, ''), fixedCat);
     } else {
       // 固定スロット（ICカード等）
       const id = fixedId;
@@ -2871,7 +2972,7 @@ function _saveDocWithFile(b64, id, name, cat) {
   saveLocal(); syncToCloud(); renderDocs();
 }
 
-function _showDocSaveDialog(b64, suggestedName) {
+function _showDocSaveDialog(b64, suggestedName, defaultCat) {
   let el = document.getElementById('doc-save-dialog');
   if (!el) {
     el = document.createElement('div');
@@ -2879,7 +2980,10 @@ function _showDocSaveDialog(b64, suggestedName) {
     el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
     document.body.appendChild(el);
   }
-  const cats = ['消防設備','設計図書','行政・認定','インテリア','見積・契約','写真','その他'];
+  const builtIn = ['消防設備','設計図書','行政・認定','インテリア','行政手続き書類','見積・契約','写真','その他'];
+  const custom = (data.docCats || []).filter(c => !builtIn.includes(c));
+  const cats = [...builtIn, ...custom];
+  const sel = defaultCat || 'その他';
   el.innerHTML = `
     <div style="background:white;border-radius:12px;padding:24px;width:360px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
       <div style="font-weight:700;font-size:15px;color:#1a2744;margin-bottom:16px;">📎 資料を保存</div>
@@ -2891,14 +2995,13 @@ function _showDocSaveDialog(b64, suggestedName) {
       <div style="margin-bottom:20px;">
         <label style="font-size:12px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px;">カテゴリ</label>
         <select id="dsd-cat" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
-          ${cats.map(c => `<option${c==='その他'?' selected':''}>${c}</option>`).join('')}
+          ${cats.map(c => `<option${c===sel?' selected':''}>${c}</option>`).join('')}
         </select>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
         <button onclick="document.getElementById('doc-save-dialog').remove()"
           style="padding:9px 18px;background:#f1f5f9;color:#1a2744;border:none;border-radius:8px;font-weight:600;cursor:pointer;">キャンセル</button>
         <button onclick="_confirmDocSave()"
-          id="dsd-save-btn"
           style="padding:9px 18px;background:#1a2744;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">保存</button>
       </div>
     </div>`;
