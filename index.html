@@ -400,6 +400,16 @@
   .task-card.drag-over { border-top: 2px solid var(--gold) !important; }
   .task-drag-handle { cursor: grab; color: var(--text-muted); font-size: 14px; padding: 0 4px 0 0; flex-shrink: 0; user-select: none; }
   .task-drag-handle:active { cursor: grabbing; }
+  .doc-drop-zone {
+    border: 2px dashed var(--border); border-radius: var(--radius);
+    padding: 20px; text-align: center; color: var(--text-muted);
+    font-size: 13px; cursor: pointer; transition: all 0.2s; margin-bottom: 16px;
+    background: white;
+  }
+  .doc-drop-zone:hover, .doc-drop-zone.drag-active { border-color: var(--gold); background: var(--gold-pale); color: var(--navy); }
+  .doc-card.drop-target { cursor: pointer; }
+  .doc-card.drop-target:hover, .doc-card.drop-target.drag-active { border-color: var(--gold); background: var(--gold-pale); }
+  .doc-card.drop-target .doc-tag { background: #f0fdf4; color: #15803d; border-color: #86efac; }
   /* 非課税行 */
   .tax-exempt-row td { background: #f0fdfa !important; }
   .tax-exempt-row:hover td { background: #ccfbf1 !important; }
@@ -893,6 +903,17 @@
   <!-- ユーザーアップロード資料 -->
   <div id="user-docs-section"></div>
 
+  <!-- ファイルドロップゾーン -->
+  <div id="doc-drop-zone" class="doc-drop-zone"
+       onclick="document.getElementById('doc-file-input').click()"
+       ondragover="event.preventDefault(); this.classList.add('drag-active')"
+       ondragleave="this.classList.remove('drag-active')"
+       ondrop="dropDocFile(event, null, null, null)">
+    📂 PDFや画像をここにドロップ（またはクリック）して追加
+  </div>
+  <input type="file" id="doc-file-input" accept=".pdf,image/*" style="display:none"
+         onchange="dropDocFileFromInput(this)">
+
   <!-- アップロードフォーム -->
   <div id="doc-upload-form">
     <div style="font-weight:700;font-size:14px;color:var(--navy);margin-bottom:12px;">📎 資料を追加</div>
@@ -976,11 +997,17 @@
   <div class="card">
     <div class="card-title">🛋️ インテリア</div>
     <div class="docs-grid">
-      <div class="doc-card" style="border-style:dashed;opacity:0.6;">
+      <div id="doc-ic-card" class="doc-card drop-target" style="border-style:dashed;"
+           onclick="document.getElementById('doc-ic-input').click()"
+           ondragover="event.preventDefault(); this.classList.add('drag-active')"
+           ondragleave="this.classList.remove('drag-active')"
+           ondrop="dropDocFile(event, 'ic1', 'ICコーディネートプラン', 'インテリア')">
         <div class="doc-icon">🖼️</div>
         <div class="doc-name">ICコーディネートプラン</div>
-        <div class="doc-tag">水野さん作成後追加</div>
+        <div class="doc-tag">📂 ドロップして追加</div>
       </div>
+      <input type="file" id="doc-ic-input" accept=".pdf,image/*" style="display:none"
+             onchange="dropDocFileFromInput(this, 'ic1', 'ICコーディネートプラン', 'インテリア')">
     </div>
   </div>
 
@@ -2746,7 +2773,11 @@ function renderDocs() {
         ${items.map(d => `
           <div class="doc-card doc-user-card" style="position:relative;">
             <button class="doc-delete-btn" onclick="deleteDoc('${d.id}')" title="削除">✕</button>
-            ${d.url
+            ${d.localKey
+              ? `<div class="doc-icon" style="cursor:pointer;" onclick="openDocLocal('${d.id}')">${DOC_CAT_ICONS[d.cat]||'📄'}</div>
+                 <div class="doc-name">${d.name}</div>
+                 <div class="doc-tag" style="background:#f0fdf4;color:#15803d;border-color:#86efac;cursor:pointer;" onclick="openDocLocal('${d.id}')">🔍 開く</div>`
+              : d.url
               ? `<a href="${d.url}" target="_blank" style="text-decoration:none;display:contents;">
                   <div class="doc-icon">${DOC_CAT_ICONS[d.cat]||'📄'}</div>
                   <div class="doc-name">${d.name}</div>
@@ -2785,8 +2816,93 @@ function saveDoc() {
 }
 function deleteDoc(id) {
   if (!confirm('この資料を削除しますか？')) return;
+  const doc = (data.docs || []).find(d => d.id === id);
+  if (doc?.localKey) localStorage.removeItem(doc.localKey);
   data.docs = (data.docs || []).filter(d => d.id !== id);
   saveLocal(); syncToCloud(); renderDocs();
+}
+
+function dropDocFile(e, fixedId, fixedName, fixedCat) {
+  e.preventDefault();
+  document.getElementById('doc-drop-zone')?.classList.remove('drag-active');
+  document.getElementById('doc-ic-card')?.classList.remove('drag-active');
+  const file = e.dataTransfer?.files?.[0];
+  if (!file) return;
+  _processDocFile(file, fixedId, fixedName, fixedCat);
+}
+
+function dropDocFileFromInput(input, fixedId, fixedName, fixedCat) {
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+  _processDocFile(file, fixedId, fixedName, fixedCat);
+}
+
+function _processDocFile(file, fixedId, fixedName, fixedCat) {
+  if (file.size > 5 * 1024 * 1024) {
+    alert('ファイルサイズが5MBを超えています。Google DriveなどのURLで登録してください。');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const b64 = ev.target.result;
+    const id = fixedId || ('d' + Date.now());
+    const name = fixedName || file.name.replace(/\.[^.]+$/, '');
+    const cat = fixedCat || 'その他';
+    const localKey = STORAGE_KEY + '_attach_doc_' + id;
+    localStorage.setItem(localKey, b64);
+    if (!data.docs) data.docs = [];
+    const existing = data.docs.find(d => d.id === id);
+    if (existing) {
+      existing.localKey = localKey;
+      existing.url = '';
+    } else {
+      data.docs.push({ id, name, cat, localKey, url: '', by: '' });
+    }
+    saveLocal(); syncToCloud(); renderDocs();
+    // ICカードのプレースホルダーを更新
+    if (fixedId === 'ic1') _updateIcCard(b64, file.name);
+  };
+  reader.readAsDataURL(file);
+}
+
+function _updateIcCard(b64, filename) {
+  const card = document.getElementById('doc-ic-card');
+  if (!card) return;
+  const isPdf = b64.startsWith('data:application/pdf');
+  card.style.borderStyle = 'solid';
+  card.style.opacity = '1';
+  card.innerHTML = `
+    <div class="doc-icon">${isPdf ? '📄' : '🖼️'}</div>
+    <div class="doc-name">ICコーディネートプラン</div>
+    <div class="doc-tag" style="background:#f0fdf4;color:#15803d;border-color:#86efac;cursor:pointer;"
+         onclick="openDocLocal('ic1')">🔍 開く</div>
+    <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">
+      <span style="cursor:pointer;color:#ef4444;" onclick="deleteDocLocal('ic1')">🗑 削除</span>
+    </div>`;
+  card.onclick = null;
+  card.ondragover = null;
+  card.ondrop = null;
+  card.classList.remove('drop-target');
+}
+
+function openDocLocal(id) {
+  const doc = (data.docs || []).find(d => d.id === id);
+  const localKey = doc?.localKey || (STORAGE_KEY + '_attach_doc_' + id);
+  const b64 = localStorage.getItem(localKey);
+  if (!b64) { alert('ファイルが見つかりません'); return; }
+  showAttachViewer(b64, 'doc', id);
+}
+
+function deleteDocLocal(id) {
+  if (!confirm('ファイルを削除しますか？')) return;
+  const localKey = STORAGE_KEY + '_attach_doc_' + id;
+  localStorage.removeItem(localKey);
+  const doc = (data.docs || []).find(d => d.id === id);
+  if (doc) { doc.localKey = null; doc.url = ''; }
+  saveLocal(); syncToCloud();
+  // ICカードをプレースホルダーに戻す
+  if (id === 'ic1') location.reload();
 }
 
 // ===== ATTACH / OCR =====
