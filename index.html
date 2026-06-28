@@ -822,7 +822,7 @@
         <thead>
           <tr>
             <th>品名</th><th>カテゴリ</th><th>数量</th><th>担当</th>
-            <th>ステータス</th><th>納期目安</th><th>予算（税込）</th><th>実績（税込）</th><th>差異</th><th>添付</th><th>操作</th>
+            <th>ステータス</th><th>納期目安</th><th>予算（税込）</th><th>実績（税込）</th><th>差異</th><th>購入先URL</th><th>添付</th><th>操作</th>
           </tr>
         </thead>
         <tbody id="supply-tbody"></tbody>
@@ -2200,6 +2200,15 @@ function inlineEditSupply(el, id, field, type) {
   else { input.addEventListener('blur', save); input.addEventListener('keydown', e => { if(e.key==='Enter') input.blur(); if(e.key==='Escape'){ item[field]=old; redraw(); } }); }
 }
 
+function editSupplyUrl(id) {
+  const item = data.supplies.find(x => x.id === id);
+  if (!item) return;
+  const url = prompt('購入先URLを入力してください：', item.url || '');
+  if (url === null) return;
+  item.url = url.trim();
+  saveLocal(); syncToCloud(); renderSupplies(currentSupplyFilter || 'all');
+}
+
 // ===== INLINE EDIT: BUDGET =====
 function inlineEditBudget(el, id, field, type) {
   const item = data.budget.find(x => x.id === id);
@@ -2388,7 +2397,7 @@ function renderSupplies(filter) {
   const items = data.supplies || [];
   const filtered = currentSupplyFilter === 'all' ? items : items.filter(s => s.cat === currentSupplyFilter);
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text-muted);">備品データがありません。「追加」ボタンから登録してください。</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text-muted);">備品データがありません。「追加」ボタンから登録してください。</td></tr>';
     return;
   }
   const statusColor = { '未着手':'#f1f5f9', '検討中':'#dbeafe', '発注済':'#fef3c7', '納品済':'#d1fae5' };
@@ -2411,6 +2420,7 @@ function renderSupplies(filter) {
     <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','price','number')">${s.price ? '¥'+Number(s.price).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
     <td class="amount">${budgetUnlocked ? `<span class="editable-click" onclick="inlineEditSupply(this,'${s.id}','actual_price','number')">${s.actual_price ? '¥'+Number(s.actual_price).toLocaleString() : '—'}</span>` : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
     <td class="amount">${budgetUnlocked ? diffHtml : `<span class="amount-locked" onclick="tryUnlockBudget()">🔒 ****</span>`}</td>
+    <td style="max-width:120px;">${s.url ? `<a href="${s.url}" target="_blank" rel="noopener" title="${s.url}" style="font-size:11px;color:var(--info);text-decoration:none;display:flex;align-items:center;gap:3px;">🔗 <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:80px;display:inline-block;">リンク</span></a><button style="background:none;border:none;cursor:pointer;font-size:10px;color:#94a3b8;padding:0 2px;" onclick="editSupplyUrl('${s.id}')" title="URLを変更">✏️</button>` : `<button style="background:#f0f9ff;border:1.5px dashed #bae6fd;color:#0369a1;border-radius:6px;font-size:10px;padding:2px 6px;cursor:pointer;" onclick="editSupplyUrl('${s.id}')">＋ URL</button>`}</td>
     <td><button class="attach-btn ${hasAttach ? 'has-attach' : ''}" onclick="openAttach('supply','${s.id}')" title="見積・レシートを添付">${hasAttach ? '📎✓' : '📎'}</button></td>
     <td><button class="btn btn-sm btn-danger" onclick="deleteSupply('${s.id}')">✕</button></td>
   </tr>`;
